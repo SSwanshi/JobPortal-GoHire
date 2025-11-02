@@ -1,8 +1,8 @@
 import api from './api';
 
 export const applicantApi = {
-  getJobs: async () => {
-    const response = await api.get('/applicant/jobs');
+  getJobs: async (query) => {
+    const response = await api.get(`/applicant/jobs?${query}`);
     return response.data.jobs;
   },
 

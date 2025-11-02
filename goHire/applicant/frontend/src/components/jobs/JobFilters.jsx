@@ -1,5 +1,6 @@
 import { Formik, Form, Field } from "formik";
-
+import { applicantApi } from "../services/applicantApi";
+import JobCard from "./JobCard";
 const JobFilters = () => {
   const handleSubmit = async (values) => {
     const params = new URLSearchParams();
@@ -9,8 +10,8 @@ const JobFilters = () => {
     });
 
     const queryString = params.toString();
-    const endpoint = `/submit-jobs?${queryString}`;
-
+    const jobs = 
+    console.log(endpoint);
     try {
       const res = await fetch(endpoint, {
         method: "GET", // use "POST" if your backend expects POST

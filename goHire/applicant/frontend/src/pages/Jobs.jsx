@@ -13,7 +13,7 @@ const Jobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const jobs = await applicantApi.getJobs();
+        const jobs = await applicantApi.getJobs("");
         setJobs(jobs);
       } catch (error) {
         console.error("Error fetching jobs:", error);
