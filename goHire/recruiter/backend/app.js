@@ -63,8 +63,16 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Connect to database
+// Connect to databases
 connectDB();
+
+// Connect to applicant database if URI is provided (async, don't await to not block server start)
+if (process.env.MONGO_URI_APPLICANT) {
+  const { connectApplicantDB } = require('./config/applicantDb');
+  (async () => {
+    await connectApplicantDB();
+  })();
+}
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,6 +1,7 @@
 const AppliedJob = require('../models/AppliedJob');
 const Job = require('../models/Jobs');
 const PremiumUser = require('../models/PremiumUser');
+const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 
 // Note: This assumes PremiumUser model exists in applicant DB
@@ -15,7 +16,22 @@ const getJobApplications = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
 
-    const applicants = await AppliedJob.find({ jobId });
+    // Try finding by jobId as string first
+    let applicants = await AppliedJob.find({ jobId });
+    
+    // If no results, try with jobId as ObjectId (if it's a valid ObjectId string)
+    if (applicants.length === 0 && mongoose.Types.ObjectId.isValid(jobId)) {
+      try {
+        applicants = await AppliedJob.find({ jobId: new mongoose.Types.ObjectId(jobId) });
+      } catch (err) {
+        // Silently fall through to next attempt
+      }
+    }
+    
+    // Also try exact string match
+    if (applicants.length === 0) {
+      applicants = await AppliedJob.find({ jobId: jobId.toString() });
+    }
 
     // Fetch premium user IDs (assuming they're in the same DB or need connection to applicant DB)
     const premiumUsers = await PremiumUser.find({}, 'userId');
@@ -44,7 +60,10 @@ const getJobApplications = async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching job applications:', err);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal Server Error'
+    });
   }
 };
 

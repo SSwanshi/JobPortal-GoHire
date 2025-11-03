@@ -3,7 +3,7 @@ import api from './api';
 export const companiesApi = {
   getCompanies: async () => {
     const response = await api.get('/recruiter/companies');
-    return response.data;
+    return response.data; 
   },
 
   addCompany: async (formData) => {
