@@ -26,24 +26,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    try {
-      const response = await authApi.login(email, password);
-      if (response.success && response.user) {
-        setUser(response.user);
-      }
-      return response;
-    } catch (error) {
-      throw error;
+    const response = await authApi.login(email, password);
+    if (response.success && response.user) {
+      setUser(response.user);
     }
+    return response;
   };
 
-  const signup = async (userData) => {
-    try {
-      const response = await authApi.signup(userData);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+  const signup = (userData) => {
+    return authApi.signup(userData);
   };
 
   const logout = async () => {

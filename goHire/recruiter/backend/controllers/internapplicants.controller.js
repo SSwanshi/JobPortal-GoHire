@@ -1,6 +1,7 @@
 const AppliedInternship = require('../models/AppliedInternship');
 const Internship = require('../models/Internship');
 const PremiumUser = require('../models/PremiumUser');
+const mongoose = require('mongoose');
 
 const getInternshipApplications = async (req, res) => {
   try {
@@ -11,7 +12,22 @@ const getInternshipApplications = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Internship not found' });
     }
 
-    const allApplicants = await AppliedInternship.find({ internshipId });
+    // Try finding by internshipId as string first
+    let allApplicants = await AppliedInternship.find({ internshipId });
+    
+    // If no results, try with internshipId as ObjectId (if it's a valid ObjectId string)
+    if (allApplicants.length === 0 && mongoose.Types.ObjectId.isValid(internshipId)) {
+      try {
+        allApplicants = await AppliedInternship.find({ internshipId: new mongoose.Types.ObjectId(internshipId) });
+      } catch (err) {
+        // Silently fall through to next attempt
+      }
+    }
+    
+    // Also try exact string match
+    if (allApplicants.length === 0) {
+      allApplicants = await AppliedInternship.find({ internshipId: internshipId.toString() });
+    }
 
     const premiumUsers = await PremiumUser.find({}, 'userId');
     const premiumUserIds = premiumUsers.map(user => user.userId);
@@ -38,7 +54,10 @@ const getInternshipApplications = async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching internship applications:', err);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal Server Error'
+    });
   }
 };
 

@@ -23,6 +23,7 @@ import Profile from '../pages/Profile';
 import EditProfile from '../pages/EditProfile';
 import Applications from '../pages/Applications';
 import InternshipApplications from '../pages/InternshipApplications';
+import ChangePassword from '../pages/ChangePassword';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -45,16 +46,12 @@ const AppRoutes = () => {
         {/* Auth Routes */}
         <Route path="/login" element={
           <PublicRoute>
-            <AuthLayout>
               <Login />
-            </AuthLayout>
           </PublicRoute>
         } />
         <Route path="/signup" element={
           <PublicRoute>
-            <AuthLayout>
               <Signup />
-            </AuthLayout>
           </PublicRoute>
         } />
 
@@ -75,6 +72,7 @@ const AppRoutes = () => {
           <Route path="internships/:internshipId/applications" element={<InternshipApplications />} />
           <Route path="profile" element={<Profile />} />
           <Route path="profile/edit" element={<EditProfile />} />
+          <Route path="profile/change-password" element={<ChangePassword />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
