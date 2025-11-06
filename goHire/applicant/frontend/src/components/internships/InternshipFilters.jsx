@@ -2,23 +2,23 @@ import { useState } from "react";
 import Slider from "@mui/material/Slider";
 
 export default function InternshipFilters({ onFiltersChange }) {
-  const [stipend, setStipned] = useState([0, 200]);
-  const [experience, setExperience] = useState([0, 2]);
+  const [stipend, setStipend] = useState([0, 200]);
+  const [duration, setDuration] = useState([0, 12]);
 
   const handleSubmit = async () => {
     const filterParams = {
-      salaryMin: stipend[0],
-      salaryMax: stipend[1],
-      expMin: experience[0],
-      expMax: experience[1],
+      stipendMin: stipend[0],
+      stipendMax: stipend[1],
+      durationMin: duration[0],
+      durationMax: duration[1],
     };
 
     onFiltersChange(filterParams);
   };
 
   const handleClear = () => {
-    setStipned([0, 100]);
-    setExperience([0, 10]);
+    setStipend([0, 200]);
+    setDuration([0, 12]);
     onFiltersChange({}); // Clear all filters
   };
 
@@ -38,28 +38,28 @@ export default function InternshipFilters({ onFiltersChange }) {
       <div className="mx-auto max-w-md rounded-lg bg-white p-6 shadow-lg">
         {/* Salary */}
         <div className="mb-6 border-b border-gray-100 pb-4">
-          <h4 className="font-medium mb-2">Salary Range (K)</h4>
+          <h4 className="font-medium mb-2">Stipend Range (K)</h4>
           <Slider
             value={stipend}
-            onChange={(_, newValue) => setStipned(newValue)}
+            onChange={(_, newValue) => setStipend(newValue)}
             valueLabelDisplay="auto"
             min={0}
             max={200}
           />
-          <p>Range: {stipend[0]} – {stipend[1]} LPA</p>
+          <p>Range: {stipend[0]} – {stipend[1]} </p>
         </div>
 
         {/* Experience */}
         <div className="mb-4">
-          <h4 className="font-medium mb-2">Experience (Years)</h4>
+          <h4 className="font-medium mb-2">Duration (Months)</h4>
           <Slider
-            value={experience}
-            onChange={(_, newValue) => setExperience(newValue)}
+            value={duration}
+            onChange={(_, newValue) => setDuration(newValue)}
             valueLabelDisplay="auto"
             min={0}
-            max={2}
+            max={12}
           />
-          <p>Range: {experience[0]} – {experience[1]} Years</p>
+          <p>Range: {duration[0]} – {duration[1]} months</p>
         </div>
 
         <button

@@ -4,22 +4,36 @@ import Header from '../components/common/Header';
 import EmptyState from '../components/common/EmptyState';
 import InternshipCard from '../components/internships/InternshipCard';
 import InternshipFilters from '../components/internships/InternshipFilters';
+import Pagination from '../components/jobs/Pagination';
 
 const Internships = () => {
   const [internships, setInternships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
-
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   const handleFiltersChange = (newFilters) => {
+    setPage(1);
     setFilters(newFilters);
   };
 
   useEffect(() => {
     const fetchInternships = async () => {
       try {
-        const data = await applicantApi.getInternships();
-        setInternships(data);
+        const params = new URLSearchParams();
+        params.set("page", page);
+
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params.set(key, value);
+          }
+        });
+
+        const queryString = params.toString();
+        const data = await applicantApi.getInternships(queryString);
+        setTotalPages(data.meta.totalPages);
+        setInternships(data.internships);
       } catch (error) {
         console.error('Error fetching internships:', error);
       } finally {
@@ -27,13 +41,15 @@ const Internships = () => {
       }
     };
     fetchInternships();
-  }, []);
+  }, [filters, page]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-
+  const handlePageChange = (newpage) => {
+    setPage(newpage);
+  }
 
   return (
     <div>
@@ -53,6 +69,11 @@ const Internships = () => {
               {internships.map((internship) => (
                 <InternshipCard key={internship._id} internship={internship} />
               ))}
+              <Pagination 
+                totalPages={totalPages} 
+                page={page} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </div>

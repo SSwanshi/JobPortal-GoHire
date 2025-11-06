@@ -16,7 +16,7 @@ const getJobs = async (req, res) => {
 
     let { salaryMin, salaryMax, expMin, expMax, page } = req.query;
     page = parseInt(page) || 1;
-    console.log('page:', page);
+
     const pageSize = 1;
     const filterCriteria = {};
 
@@ -56,7 +56,7 @@ const getJobs = async (req, res) => {
 
     const totalCount = jobs[0]?.metaData[0]?.totalcount || 0;
     const totalPages = Math.ceil(totalCount / pageSize);
-   
+
     res.status(200).json({
       message: "success",
       meta: { totalCount, totalPages, page, pageSize },
@@ -68,21 +68,58 @@ const getJobs = async (req, res) => {
   }
 };
 
-
 const getInternships = async (req, res) => {
   try {
     const recruiterConn = await connectRecruiterDB();
     const InternshipFindConn = createInternshipModel(recruiterConn);
     const CompanyModel = createCompanyModel(recruiterConn);
 
-    const InternshipFind = await InternshipFindConn.find({})
-      .populate({
-        path: "intCompany",
-        strictPopulate: false,
-      })
-      .lean();
+    let { stipendMin, stipendMax, durationMin, durationMax, page } = req.query;
+    page = parseInt(page) || 1;
+    const pageSize = 1;
+    const filterCriteria = {};
 
-    res.json(InternshipFind);
+    if (stipendMin || stipendMax) {
+      filterCriteria.intStipend = {};
+      if (stipendMin) filterCriteria.intStipend.$gte = Number(stipendMin);
+      if (stipendMax) filterCriteria.intStipend.$lte = Number(stipendMax);
+    }
+
+    if (durationMin || durationMax) {
+      filterCriteria.intExperience = {};
+      if (durationMin) filterCriteria.intExperience.$gte = Number(expMin);
+      if (durationMax) filterCriteria.intExperience.$lte = Number(durationMax);
+    }
+
+    const internships = await InternshipFindConn.aggregate([
+      { $match: filterCriteria },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "companies", 
+          localField: "intCompany",
+          foreignField: "_id",
+          as: "intCompany",
+        },
+      },
+      { $unwind: { path: "$intCompany", preserveNullAndEmptyArrays: true } },
+      {
+        $facet: {
+          metaData: [{ $count: "totalcount" }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    const totalCount = internships[0]?.metaData[0]?.totalcount || 0;
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+
+    res.status(200).json({
+      message: "success",
+      meta: { totalCount, totalPages, page, pageSize },
+      internships: internships[0]?.data || [],
+    });
   } catch (err) {
     console.error("Error fetching internships:", err);
     res.status(500).json({ error: "Internal Server Error" });
