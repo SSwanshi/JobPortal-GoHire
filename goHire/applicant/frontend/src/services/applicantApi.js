@@ -1,13 +1,20 @@
 import api from './api';
 
 export const applicantApi = {
-  getJobs: async () => {
-    const response = await api.get('/applicant/jobs');
+  getJobs: async (query) => {
+    let endpoint;
+    if(query) endpoint = `/applicant/jobs?${query}`
+    else endpoint = `/applicant/jobs`
+    const response = await api.get(endpoint);
     return response.data;
   },
 
-  getInternships: async () => {
-    const response = await api.get('/applicant/internships');
+  getInternships: async (query) => {
+    let endpoint;
+    if(query) endpoint = `/applicant/internships?${query}`
+    else endpoint = `applicant/internships`
+    const response = await api.get(endpoint);
+    console.log(response.data);
     return response.data;
   },
 

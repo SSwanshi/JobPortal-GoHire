@@ -1,36 +1,126 @@
 import { Link } from 'react-router-dom';
 import { applicantApi } from '../../services/applicantApi';
+import { formatTimeAgo } from '../../utils/formatTimeAgo';
+// Utility function to format "time ago"
+
 
 const JobCard = ({ job }) => {
   const companyName = job.jobCompany?.companyName || 'Company Not Available';
   const logoUrl = job.jobCompany?.logoId ? applicantApi.getLogo(job.jobCompany.logoId) : null;
+  const jobRequirements = job.jobRequirements ? job.jobRequirements.split('\n').filter(Boolean) : [];
+  const jobDescription = job.jobDescription ? job.jobDescription.split('\n').filter(Boolean) : [];
+  const expiryDate =
+    job.jobExpiry && new Date(job.jobExpiry) > new Date()
+      ? new Date(job.jobExpiry).toLocaleDateString('en-GB')
+      : 'Expired';
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900">{job.jobTitle || 'N/A'}</h3>
-          <p className="text-gray-600">{companyName}</p>
+    <div className="job-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+      {/* Job Title Row */}
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex items-center gap-3">
+          {/* Company Logo */}
+          <div className="bg-gray-100 p-1.5 rounded-lg">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={`${companyName} Logo`}
+                className="h-12 w-12 object-contain rounded-md"
+              />
+            ) : (
+              <div className="h-12 w-12 bg-gray-300 rounded-md flex items-center justify-center">
+                <span className="text-gray-500 text-xs font-bold">N/A</span>
+              </div>
+            )}
+          </div>
+
+          {/* Job Title and Company Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{job.jobTitle || 'N/A'}</h3>
+            <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
+              <span className="font-semibold">{companyName}</span>
+              <span>•</span>
+              <span className="inline-block px-3 py-1 text-sm font-medium text-orange-500 bg-orange-100 rounded-full">
+                {job.jobType || 'N/A'}
+              </span>
+              <span className="inline-block px-3 py-1 text-sm font-medium text-purple-500 bg-purple-100 rounded-full">
+                Experience: {job.jobExperience || 0} years
+              </span>
+              <span className="inline-block px-3 py-1 text-sm font-medium text-green-500 bg-green-100 rounded-full">
+                Positions: {job.noofPositions || 0}
+              </span>
+              <span className="inline-block px-3 py-1 text-sm font-medium text-red-500 bg-red-100 rounded-full">
+                Expiry: {expiryDate}
+              </span>
+            </div>
+          </div>
         </div>
-        {logoUrl && (
-          <img src={logoUrl} alt={companyName} className="h-12 w-12 object-contain" />
+
+        {/* Location and Time */}
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            <span className="text-lg font-semibold text-gray-900">{job.jobLocation || 'N/A'}</span>
+          </div>
+          <span>Posted {formatTimeAgo(job.createdAt)}</span>
+        </div>
+      </div>
+
+      {/* Job Requirements */}
+      {jobRequirements.length > 0 && (
+        <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
+          {jobRequirements.map((req, i) => (
+            <li key={i} className="leading-snug">
+              {req.trim()}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Job Description */}
+      {jobDescription.length > 0 && (
+        <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
+          {jobDescription.map((desc, i) => (
+            <li key={i} className="leading-snug">
+              {desc.trim()}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Salary and Apply */}
+      <div className="flex items-center justify-between border-t pt-4">
+        {job.jobSalary && (
+          <div className="text-sm font-medium text-gray-800">{job.jobSalary} LPA</div>
         )}
+        <Link
+          to={`/jobs/${job._id}/apply`}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Apply Now
+        </Link>
       </div>
-      <p className="text-gray-700 mb-4 line-clamp-2">{job.jobDescription || 'No description available'}</p>
-      <div className="flex flex-wrap gap-2 mb-4">
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">{job.jobLocation || 'N/A'}</span>
-        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">₹{job.jobSalary || 'N/A'}L</span>
-        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">{job.jobType || 'N/A'}</span>
-      </div>
-      <Link
-        to={`/jobs/${job._id}/apply`}
-        className="block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
-      >
-        Apply Now
-      </Link>
     </div>
   );
 };
 
 export default JobCard;
-
