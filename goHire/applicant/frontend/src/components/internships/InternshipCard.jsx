@@ -104,7 +104,7 @@ const InternshipCard = ({ internship }) => {
           </div>
         )}
         <Link
-          to={`/applyforInternships/${internship._id}`}
+          to={`/internships/${internship._id}/apply`}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors"
         >
           Apply Now
