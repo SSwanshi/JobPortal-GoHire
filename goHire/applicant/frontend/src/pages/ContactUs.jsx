@@ -1,20 +1,22 @@
 import React from "react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
+import sarvjeetImage from "../assets/images/Sarvjeet.jpg";
+import kartikImage from "../assets/images/kartik.jpg";
+import anujImage from "../assets/images/AnujRathore.jpg";
+import sauravImage from "../assets/images/Saurav.jpg";
+import likhithaImage from "../assets/images/likhitha.jpg";
 
 const Contact = () => {
   return (
     <div className="bg-blue-50">
-      {/* Navbar */}
-        <Navbar></Navbar>
-
       {/* Contact Section */}
       <section className="pt-28 bg-gradient-to-r from-blue-100 to-yellow-100 h-[800px]">
         <div className="flex justify-around fade-in bg-gradient-to-r from-blue-700 to-yellow-700 bg-clip-text text-transparent">
           {/* Person 1 */}
           <div className="flex flex-col justify-center font-bold">
             <img
-              src="/images/Sarvjeet.jpg"
+              src={sarvjeetImage}
               alt="Sarvjeet Swanshi"
               className="h-[200px] w-[200px] object-contain rounded-full"
             />
@@ -28,7 +30,7 @@ const Contact = () => {
           {/* Person 2 */}
           <div className="flex flex-col justify-center font-bold">
             <img
-              src="/images/kartik.jpg"
+              src={kartikImage}
               alt="Kartik Raghuvanshi"
               className="h-[200px] w-[200px] object-contain rounded-full"
             />
@@ -42,7 +44,7 @@ const Contact = () => {
           {/* Person 3 */}
           <div className="flex flex-col justify-center font-bold">
             <img
-              src="/images/AnujRathore.jpg"
+              src={anujImage}
               alt="Anuj Rathore"
               className="h-[200px] w-[200px] object-contain rounded-full"
             />
@@ -59,7 +61,7 @@ const Contact = () => {
           {/* Person 4 */}
           <div className="flex flex-col justify-center font-bold">
             <img
-              src="/images/Saurav.jpg"
+              src={sauravImage}
               alt="Saurav Kumar Roy"
               className="h-[200px] w-[200px] object-contain rounded-full"
             />
@@ -73,7 +75,7 @@ const Contact = () => {
           {/* Person 5 */}
           <div className="flex flex-col justify-center font-bold">
             <img
-              src="/images/likhitha.jpg"
+              src={likhithaImage}
               alt="Bandi Likhitha"
               className="h-[200px] w-[200px] object-contain rounded-full"
             />
@@ -85,9 +87,6 @@ const Contact = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <Footer></Footer>
     </div>
   );
 };
