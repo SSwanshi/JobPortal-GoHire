@@ -10,6 +10,21 @@ const api = axios.create({
   },
 });
 
+// Request interceptor to handle FormData uploads
+api.interceptors.request.use(
+  (config) => {
+    // If the data is FormData, remove Content-Type header
+    // Axios will automatically set it with the correct boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
