@@ -2,6 +2,7 @@ const Fuse = require('fuse.js');
 const connectRecruiterDB = require('../config/recruiterDB');
 const createJobModel = require('../models/recruiter/Job');
 const createInternshipModel = require('../models/recruiter/Internships');
+const createCompanyModel = require('../models/recruiter/Company');
 
 const search = async (req, res) => {
   try {
@@ -11,6 +12,8 @@ const search = async (req, res) => {
     const recruiterConn = await connectRecruiterDB();
     const JobFindConn = createJobModel(recruiterConn);
     const InternshipFindConn = createInternshipModel(recruiterConn);
+    // Register Company model before populate
+    createCompanyModel(recruiterConn);
 
     const JobFind = await JobFindConn.find({}).populate({
       path: 'jobCompany',

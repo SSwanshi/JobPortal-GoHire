@@ -16,7 +16,6 @@ const getJobs = async (req, res) => {
 
     let { salaryMin, expMin, expMax, page, location } = req.query;
     page = parseInt(page) || 1;
-    console.log(location);
     const pageSize = 1;
     const filterCriteria = {};
 
@@ -84,7 +83,6 @@ const getInternships = async (req, res) => {
     page = parseInt(page) || 1;
     const pageSize = 1;
     const filterCriteria = {};
-    console.log(location)
     if (stipendMin !== undefined) {
       filterCriteria.intStipend = { $gte: Number(stipendMin) * 1000 };
     }
@@ -165,7 +163,8 @@ const filterJobs = async (req, res) => {
 
     const recruiterConn = await connectRecruiterDB();
     const JobFindConn = createJobModel(recruiterConn);
-    const CompanyModel = createCompanyModel(recruiterConn);
+    // Register Company model before populate
+    createCompanyModel(recruiterConn);
 
     const query = {};
 
@@ -248,6 +247,8 @@ const getJobById = async (req, res) => {
     const { jobId } = req.params;
     const recruiterConn = await connectRecruiterDB();
     const JobFindConn = createJobModel(recruiterConn);
+    // Register Company model before populate
+    createCompanyModel(recruiterConn);
 
     const job = await JobFindConn.findById(jobId)
       .populate({
@@ -272,6 +273,8 @@ const getInternshipById = async (req, res) => {
     const { internshipId } = req.params;
     const recruiterConn = await connectRecruiterDB();
     const InternshipFindConn = createInternshipModel(recruiterConn);
+    // Register Company model before populate
+    createCompanyModel(recruiterConn);
 
     const internship = await InternshipFindConn.findById(internshipId)
       .populate({
@@ -469,15 +472,32 @@ const getAppliedInternships = async (req, res) => {
 const getLogo = async (req, res) => {
   try {
     const logoId = req.params.logoId;
+    
+    if (!logoId || !mongoose.Types.ObjectId.isValid(logoId)) {
+      return res.status(400).json({ error: "Invalid logo ID" });
+    }
+
     const response = await axios({
       method: "get",
       url: `http://localhost:5000/recruiter/logo/${logoId}`,
       responseType: "stream",
+      validateStatus: (status) => status < 500, // Don't throw on 404
     });
 
-    res.setHeader("Content-Type", response.headers["content-type"]);
+    if (response.status === 404) {
+      return res.status(404).json({ error: "Logo not found" });
+    }
+
+    if (response.status !== 200) {
+      return res.status(response.status).json({ error: "Failed to fetch logo" });
+    }
+
+    res.setHeader("Content-Type", response.headers["content-type"] || "image/png");
     response.data.pipe(res);
   } catch (error) {
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: "Logo not found" });
+    }
     console.error("Error proxying logo:", error.message);
     res.status(500).json({ error: "Failed to fetch logo" });
   }
