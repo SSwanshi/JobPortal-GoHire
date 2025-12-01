@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const PremiumUser = require('../models/premium_user');
 const Applied_for_Jobs = require('../models/Applied_for_Jobs');
 const Applied_for_Internships = require('../models/Applied_for_Internships');
 const { getBucket } = require('../config/db');
@@ -19,6 +20,10 @@ const getProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    // Check if user is premium
+    const premiumUser = await PremiumUser.findOne({ email: user.email });
+    const isPremium = !!premiumUser;
 
     let resumeName = null;
     if (user.resumeId) {
@@ -109,7 +114,8 @@ const getProfile = async (req, res) => {
         email: user.email,
         phone: user.phone,
         gender: user.gender,
-        profileImageId: user.profileImageId
+        profileImageId: user.profileImageId,
+        isPremium: isPremium
       },
       resumeName,
       applicationHistory
