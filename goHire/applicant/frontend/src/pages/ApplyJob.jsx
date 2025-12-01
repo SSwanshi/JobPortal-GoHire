@@ -226,7 +226,7 @@ const ApplyJob = () => {
                       <div>
                         <p className="text-sm text-gray-500">Salary</p>
                         <p className="font-medium">
-                          ₹{job?.jobSalary}k per month
+                          {job?.jobSalary} LPA
                         </p>
                       </div>
                     </div>
@@ -282,11 +282,10 @@ const ApplyJob = () => {
                   type="button"
                   onClick={handleApply}
                   disabled={submitting || alreadyApplied}
-                  className={`w-full font-bold py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-lg flex items-center justify-center ${
-                    alreadyApplied
-                      ? 'bg-green-400 text-green-900 cursor-not-allowed'
-                      : 'bg-yellow-400 hover:bg-yellow-500 text-blue-800'
-                  }`}
+                  className={`w-full font-bold py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-lg flex items-center justify-center ${alreadyApplied
+                    ? 'bg-green-400 text-green-900 cursor-not-allowed'
+                    : 'bg-yellow-400 hover:bg-yellow-500 text-blue-800'
+                    }`}
                 >
                   {alreadyApplied ? 'Successfully Applied !!' : 'Apply Now'}
                   {!alreadyApplied && (
@@ -318,9 +317,8 @@ const ApplyJob = () => {
 
       {/* Toast Notification */}
       <div
-        className={`fixed top-24 right-4 bg-green-500 text-white py-3 px-6 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300 z-50 ${
-          toastVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-        }`}
+        className={`fixed top-24 right-4 bg-green-500 text-white py-3 px-6 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300 z-50 ${toastVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+          }`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

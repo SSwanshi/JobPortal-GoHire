@@ -234,7 +234,7 @@ const ApplyInternship = () => {
                                                 <p className="text-sm text-gray-500">Stipend</p>
                                                 <p className="font-medium">
                                                     ₹{internship?.intStipend || internship?.intStipned}
-                                                    k per month
+                                                    per month
                                                 </p>
                                             </div>
                                         </div>

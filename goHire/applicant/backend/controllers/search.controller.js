@@ -2,6 +2,7 @@ const Fuse = require('fuse.js');
 const connectRecruiterDB = require('../config/recruiterDB');
 const createJobModel = require('../models/recruiter/Job');
 const createInternshipModel = require('../models/recruiter/Internships');
+const createCompanyModel = require('../models/recruiter/Company');
 
 const search = async (req, res) => {
   try {
@@ -11,6 +12,7 @@ const search = async (req, res) => {
     const recruiterConn = await connectRecruiterDB();
     const JobFindConn = createJobModel(recruiterConn);
     const InternshipFindConn = createInternshipModel(recruiterConn);
+    const CompanyModel = createCompanyModel(recruiterConn);
 
     const JobFind = await JobFindConn.find({}).populate({
       path: 'jobCompany',
@@ -23,7 +25,9 @@ const search = async (req, res) => {
           name: "companyName",
           getFn: (obj) => obj.jobCompany ? obj.jobCompany.companyName : ""
         },
-        "jobTitle"
+        "jobTitle",
+        "jobLocation",
+        "jobType"
       ],
       threshold: 0.3,
       includeScore: true
@@ -48,7 +52,8 @@ const search = async (req, res) => {
           name: "companyName",
           getFn: (obj) => obj.intCompany ? obj.intCompany.companyName : ""
         },
-        "intTitle"
+        "intTitle",
+        "intLocation"
       ],
       threshold: 0.3,
       includeScore: true
@@ -79,4 +84,3 @@ const search = async (req, res) => {
 module.exports = {
   search
 };
-

@@ -122,8 +122,8 @@ const SearchResults = () => {
                   type="button"
                   onClick={() => setActiveTab('jobs')}
                   className={`px-4 py-2 text-sm font-medium rounded-l-lg ${activeTab === 'jobs'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-blue-600 hover:bg-gray-50'
                     }`}
                 >
                   Jobs ({totalJobs})
@@ -132,8 +132,8 @@ const SearchResults = () => {
                   type="button"
                   onClick={() => setActiveTab('internships')}
                   className={`px-4 py-2 text-sm font-medium rounded-r-lg ${activeTab === 'internships'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-blue-600 hover:bg-gray-50'
                     }`}
                 >
                   Internships ({totalInternships})
