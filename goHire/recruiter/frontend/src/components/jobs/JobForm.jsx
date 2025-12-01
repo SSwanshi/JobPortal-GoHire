@@ -7,7 +7,8 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
     jobTitle: Yup.string()
       .required('Job title is required')
       .min(3, 'Job title must be at least 3 characters')
-      .max(100, 'Job title must be less than 100 characters'),
+      .max(100, 'Job title must be less than 100 characters')
+      .matches(/^[A-Za-z\s]+$/, 'Job title should contain only alphabets'),
     jobDescription: Yup.string()
       .required('Job description is required')
       .min(10, 'Job description must be at least 10 characters')
@@ -16,27 +17,43 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
       .required('Job requirements are required')
       .min(10, 'Job requirements must be at least 10 characters')
       .max(2000, 'Job requirements must be less than 2000 characters'),
-    jobSalary: Yup.number()
+    jobSalary: Yup.string()
       .required('Salary is required')
-      .positive('Salary must be a positive number')
-      .min(0, 'Salary must be at least 0'),
+      .matches(/^\d+$/, 'Salary must contain only digits')
+      .test('positive', 'Salary must be a positive number', (value) => {
+        if (!value) return false;
+        const num = parseInt(value, 10);
+        return num > 0;
+      }),
     jobLocation: Yup.string()
       .required('Job location is required')
       .min(2, 'Job location must be at least 2 characters')
-      .max(200, 'Job location must be less than 200 characters'),
+      .max(200, 'Job location must be less than 200 characters')
+      .matches(/^[A-Za-z\s,]+$/, 'Location should contain only alphabets, spaces, and commas'),
     jobType: Yup.string()
       .required('Job type is required')
       .oneOf(['Full-Time', 'Part-Time', 'Internship'], 'Please select a valid job type'),
-    jobExperience: Yup.number()
+    jobExperience: Yup.string()
       .required('Experience is required')
-      .integer('Experience must be a whole number')
-      .min(0, 'Experience must be at least 0 years')
-      .max(50, 'Experience must be less than 50 years'),
-    noofPositions: Yup.number()
+      .matches(/^\d+$/, 'Experience must contain only digits')
+      .test('valid-range', 'Experience must be between 0 and 50 years', (value) => {
+        if (!value) return false;
+        const num = parseInt(value, 10);
+        return num >= 0 && num <= 50;
+      }),
+    noofPositions: Yup.string()
       .required('Number of positions is required')
-      .integer('Number of positions must be a whole number')
-      .min(1, 'At least 1 position is required')
-      .max(1000, 'Number of positions must be less than 1000'),
+      .matches(/^\d+$/, 'Number of positions must contain only digits')
+      .test('min-positions', 'At least 1 position is required', (value) => {
+        if (!value) return false;
+        const num = parseInt(value, 10);
+        return num >= 1;
+      })
+      .test('max-positions', 'Number of positions must be less than 1000', (value) => {
+        if (!value) return false;
+        const num = parseInt(value, 10);
+        return num <= 1000;
+      }),
     jobCompany: Yup.string()
       .required('Company is required')
       .test('verified-company', 'Please select a verified company', (value) => {
@@ -89,7 +106,7 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
       onSubmit={handleFormSubmit}
       enableReinitialize
     >
-      {({ errors, touched }) => (
+      {({ errors, touched, setFieldValue }) => (
         <Form className="space-y-6">
           {/* Job Title */}
           <div>
@@ -104,11 +121,21 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               name="jobTitle"
               type="text"
               placeholder="e.g., Software Engineer, Marketing Manager"
+              onKeyPress={(e) => {
+                const char = String.fromCharCode(e.which);
+                if (!/[A-Za-z\s]/.test(char)) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                setFieldValue('jobTitle', value);
+              }}
               className={`mt-1 w-full rounded-md border ${
                 errors.jobTitle && touched.jobTitle
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2`}
             />
             <ErrorMessage
               name="jobTitle"
@@ -131,9 +158,9 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               name="jobCompany"
               className={`mt-1 w-full rounded-md border ${
                 errors.jobCompany && touched.jobCompany
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2`}
             >
               <option value="">Select a company</option>
               {verifiedCompanies.length === 0 ? (
@@ -176,9 +203,9 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               placeholder="Describe the role, responsibilities, and what you're looking for..."
               className={`mt-1 w-full rounded-md border ${
                 errors.jobDescription && touched.jobDescription
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2 resize-vertical`}
             />
             <ErrorMessage
               name="jobDescription"
@@ -203,9 +230,9 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               placeholder="List the required skills, qualifications, and experience..."
               className={`mt-1 w-full rounded-md border ${
                 errors.jobRequirements && touched.jobRequirements
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2 resize-vertical`}
             />
             <ErrorMessage
               name="jobRequirements"
@@ -227,15 +254,25 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               <Field
                 id="jobSalary"
                 name="jobSalary"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
                 placeholder="e.g., 50000"
+                onKeyPress={(e) => {
+                  // Only allow digits
+                  const char = String.fromCharCode(e.which);
+                  if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  // Only allow digits
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFieldValue('jobSalary', value);
+                }}
                 className={`mt-1 w-full rounded-md border ${
                   errors.jobSalary && touched.jobSalary
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               />
               <ErrorMessage
                 name="jobSalary"
@@ -257,11 +294,23 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
                 name="jobLocation"
                 type="text"
                 placeholder="e.g., Mumbai, Remote, Hybrid"
+                onKeyPress={(e) => {
+                  // Only allow alphabets, spaces, and commas
+                  const char = String.fromCharCode(e.which);
+                  if (!/[A-Za-z\s,]/.test(char)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  // Only allow alphabets, spaces, and commas
+                  const value = e.target.value.replace(/[^A-Za-z\s,]/g, '');
+                  setFieldValue('jobLocation', value);
+                }}
                 className={`mt-1 w-full rounded-md border ${
                   errors.jobLocation && touched.jobLocation
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               />
               <ErrorMessage
                 name="jobLocation"
@@ -287,9 +336,9 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
                 name="jobType"
                 className={`mt-1 w-full rounded-md border ${
                   errors.jobType && touched.jobType
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               >
                 <option value="">Select job type</option>
                 <option value="Full-Time">Full-Time</option>
@@ -314,15 +363,25 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               <Field
                 id="jobExperience"
                 name="jobExperience"
-                type="number"
-                min="0"
-                max="50"
+                type="text"
                 placeholder="e.g., 2"
+                onKeyPress={(e) => {
+                  // Only allow digits
+                  const char = String.fromCharCode(e.which);
+                  if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  // Only allow digits
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFieldValue('jobExperience', value);
+                }}
                 className={`mt-1 w-full rounded-md border ${
                   errors.jobExperience && touched.jobExperience
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               />
               <ErrorMessage
                 name="jobExperience"
@@ -345,15 +404,25 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
               <Field
                 id="noofPositions"
                 name="noofPositions"
-                type="number"
-                min="1"
-                max="1000"
+                type="text"
                 placeholder="e.g., 5"
+                onKeyPress={(e) => {
+                  // Only allow digits
+                  const char = String.fromCharCode(e.which);
+                  if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  // Only allow digits
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFieldValue('noofPositions', value);
+                }}
                 className={`mt-1 w-full rounded-md border ${
                   errors.noofPositions && touched.noofPositions
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               />
               <ErrorMessage
                 name="noofPositions"
@@ -374,11 +443,12 @@ const JobForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText = "Su
                 id="jobExpiry"
                 name="jobExpiry"
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 className={`mt-1 w-full rounded-md border ${
                   errors.jobExpiry && touched.jobExpiry
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2`}
               />
               <ErrorMessage
                 name="jobExpiry"

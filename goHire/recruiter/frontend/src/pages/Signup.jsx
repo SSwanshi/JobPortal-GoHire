@@ -12,22 +12,234 @@ const Signup = () => {
     gender: "",
     password: "",
     confirmPassword: "",
+    termsAgree: false,
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touchedFields, setTouchedFields] = useState({});
   const { signup } = useAuth();
   const navigate = useNavigate();
 
+  // Validation functions
+  const validateFirstName = (value) => {
+    if (!value.trim()) {
+      return "First name is required";
+    }
+    if (!/^[A-Za-z\s]+$/.test(value)) {
+      return "First name should contain only alphabets";
+    }
+    return "";
+  };
+
+  const validateLastName = (value) => {
+    if (value && !/^[A-Za-z\s]+$/.test(value)) {
+      return "Last name should contain only alphabets";
+    }
+    return "";
+  };
+
+  const validateEmail = (value) => {
+    if (!value.trim()) {
+      return "Email is required";
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(value)) {
+      return "Please enter a valid email address";
+    }
+    // Additional check for common invalid patterns
+    if (value.includes("..") || value.startsWith(".") || value.startsWith("@") || value.endsWith(".")) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const validatePhone = (value) => {
+    if (!value.trim()) {
+      return "Phone number is required";
+    }
+    if (!/^\d+$/.test(value)) {
+      return "Phone number should contain only digits";
+    }
+    if (value.length !== 10) {
+      return "Phone number must be exactly 10 digits";
+    }
+    return "";
+  };
+
+  const validateGender = (value) => {
+    if (!value) {
+      return "Please select a gender";
+    }
+    return "";
+  };
+
+  const validatePassword = (value) => {
+    if (!value) {
+      return "Password is required";
+    }
+    if (value.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    const specialCharCount = (value.match(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g) || []).length;
+    if (specialCharCount < 2) {
+      return "Password must contain at least 2 special characters";
+    }
+    return "";
+  };
+
+  const validateConfirmPassword = (value, password) => {
+    if (!value) {
+      return "Please confirm your password";
+    }
+    if (value !== password) {
+      return "Passwords do not match";
+    }
+    return "";
+  };
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    const { name, value, type, checked } = e.target;
+    const fieldValue = type === "checkbox" ? checked : value;
+
+    // Restrict input based on field type
+    if (name === "firstName" || name === "lastName") {
+      // Only allow alphabets and spaces
+      if (value === "" || /^[A-Za-z\s]*$/.test(value)) {
+        setFormData({
+          ...formData,
+          [name]: value,
+        });
+      }
+    } else if (name === "phone") {
+      // Only allow digits and limit to 10
+      if (value === "" || (/^\d+$/.test(value) && value.length <= 10)) {
+        setFormData({
+          ...formData,
+          [name]: value,
+        });
+      }
+    } else {
+      setFormData({
+        ...formData,
+        [name]: fieldValue,
+      });
+    }
+
+    // Clear error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: "",
+      });
+    }
+
+    // Re-validate confirmPassword when password changes
+    if (name === "password" && touchedFields.confirmPassword && formData.confirmPassword) {
+      const confirmError = validateConfirmPassword(formData.confirmPassword, fieldValue);
+      setFieldErrors({
+        ...fieldErrors,
+        confirmPassword: confirmError,
+      });
+    }
+
+    // Validate gender immediately when selected
+    if (name === "gender") {
+      const genderError = validateGender(fieldValue);
+      setFieldErrors({
+        ...fieldErrors,
+        gender: genderError,
+      });
+      setTouchedFields({
+        ...touchedFields,
+        gender: true,
+      });
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouchedFields({
+      ...touchedFields,
+      [name]: true,
     });
+
+    let error = "";
+    switch (name) {
+      case "firstName":
+        error = validateFirstName(value);
+        break;
+      case "lastName":
+        error = validateLastName(value);
+        break;
+      case "email":
+        error = validateEmail(value);
+        break;
+      case "phone":
+        error = validatePhone(value);
+        break;
+      case "gender":
+        error = validateGender(formData.gender);
+        break;
+      case "password":
+        error = validatePassword(value);
+        break;
+      case "confirmPassword":
+        error = validateConfirmPassword(value, formData.password);
+        break;
+      default:
+        break;
+    }
+
+    setFieldErrors({
+      ...fieldErrors,
+      [name]: error,
+    });
+  };
+
+  const validateAllFields = () => {
+    const errors = {};
+    errors.firstName = validateFirstName(formData.firstName);
+    errors.lastName = validateLastName(formData.lastName);
+    errors.email = validateEmail(formData.email);
+    errors.phone = validatePhone(formData.phone);
+    errors.gender = validateGender(formData.gender);
+    errors.password = validatePassword(formData.password);
+    errors.confirmPassword = validateConfirmPassword(
+      formData.confirmPassword,
+      formData.password
+    );
+
+    setFieldErrors(errors);
+    setTouchedFields({
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      gender: true,
+      password: true,
+      confirmPassword: true,
+    });
+
+    return !Object.values(errors).some((error) => error !== "");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validate all fields
+    if (!validateAllFields()) {
+      setError("Please fix all errors before submitting");
+      return;
+    }
+
+    // Check terms agreement
+    if (!formData.termsAgree) {
+      setError("You must agree to the Privacy Policy and Terms of Use");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -84,9 +296,16 @@ const Signup = () => {
                 required
                 value={formData.firstName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="First Name"
-                className="mt-1 w-full rounded-md border border-blue-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.firstName && fieldErrors.firstName
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-blue-300 focus:ring-blue-500"
+                  }`}
               />
+              {touchedFields.firstName && fieldErrors.firstName && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.firstName}</p>
+              )}
             </div>
             <div>
               <label
@@ -101,9 +320,16 @@ const Signup = () => {
                 type="text"
                 value={formData.lastName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Last Name"
-                className="mt-1 w-full rounded-md border border-blue-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.lastName && fieldErrors.lastName
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-blue-300 focus:ring-blue-500"
+                  }`}
               />
+              {touchedFields.lastName && fieldErrors.lastName && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.lastName}</p>
+              )}
             </div>
           </div>
 
@@ -122,9 +348,16 @@ const Signup = () => {
               required
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               placeholder="Email"
-              className="mt-1 w-full rounded-md border border-blue-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.email && fieldErrors.email
+                ? "border-red-500 focus:ring-red-500"
+                : "border-blue-300 focus:ring-blue-500"
+                }`}
             />
+            {touchedFields.email && fieldErrors.email && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Phone */}
@@ -135,7 +368,12 @@ const Signup = () => {
             >
               Phone <span className="text-yellow-500">*</span>
             </label>
-            <div className="flex border border-blue-300 rounded-md overflow-hidden">
+            <div
+              className={`flex border rounded-md overflow-hidden ${touchedFields.phone && fieldErrors.phone
+                ? "border-red-500"
+                : "border-blue-300"
+                }`}
+            >
               <span className="bg-blue-100 px-3 flex items-center text-blue-800 font-medium">
                 +91
               </span>
@@ -146,10 +384,18 @@ const Signup = () => {
                 required
                 value={formData.phone}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Phone Number"
-                className="flex-1 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                maxLength="10"
+                className={`flex-1 p-2 focus:outline-none focus:ring-2 ${touchedFields.phone && fieldErrors.phone
+                  ? "focus:ring-red-500"
+                  : "focus:ring-blue-500"
+                  }`}
               />
             </div>
+            {touchedFields.phone && fieldErrors.phone && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
+            )}
           </div>
 
           {/* Gender */}
@@ -169,12 +415,16 @@ const Signup = () => {
                     value={g}
                     checked={formData.gender === g}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className="text-blue-600 focus:ring-blue-500"
                   />
                   <span className="capitalize">{g}</span>
                 </label>
               ))}
             </div>
+            {touchedFields.gender && fieldErrors.gender && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.gender}</p>
+            )}
           </div>
 
           {/* Passwords */}
@@ -193,9 +443,19 @@ const Signup = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Password"
-                className="mt-1 w-full rounded-md border border-blue-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.password && fieldErrors.password
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-blue-300 focus:ring-blue-500"
+                  }`}
               />
+              {touchedFields.password && fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
+              )}
+              <p className="mt-1 text-xs text-blue-600">
+                Password must be at least 8 characters long with at least 2 special characters
+              </p>
             </div>
             <div>
               <label
@@ -211,42 +471,56 @@ const Signup = () => {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Confirm Password"
-                className="mt-1 w-full rounded-md border border-blue-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.confirmPassword && fieldErrors.confirmPassword
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-blue-300 focus:ring-blue-500"
+                  }`}
               />
+              {touchedFields.confirmPassword && fieldErrors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.confirmPassword}</p>
+              )}
             </div>
           </div>
 
           {/* Terms */}
-          <div className="flex items-start text-sm text-blue-800">
-            <input
-              id="termsAgree"
-              name="termsAgree"
-              type="checkbox"
-              required
-              className="mt-1 mr-2 h-4 w-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="termsAgree">
-              By signing up, you agree to our{" "}
-              <Link
-                to="/privacy"
-                className="text-yellow-600 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Privacy Policy
-              </Link>{" "}
-              and{" "}
-              <Link 
-                to="/terms" 
-                className="text-yellow-600 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Terms of Use
-              </Link>
-              .
-            </label>
+          <div>
+            <div className="flex items-start text-sm text-blue-800">
+              <input
+                id="termsAgree"
+                name="termsAgree"
+                type="checkbox"
+                required
+                checked={formData.termsAgree}
+                onChange={handleChange}
+                className="mt-1 mr-2 h-4 w-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="termsAgree">
+                By signing up, you agree to our{" "}
+                <Link
+                  to="/privacy-policy"
+                  className="text-yellow-600 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link 
+                  to="/terms" 
+                  className="text-yellow-600 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Terms of Use
+                </Link>
+                . <span className="text-yellow-500">*</span>
+              </label>
+            </div>
+            {error && error.includes("agree") && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
           </div>
 
           {/* Submit Button */}

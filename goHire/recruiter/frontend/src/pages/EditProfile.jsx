@@ -38,12 +38,15 @@ const EditProfile = () => {
     firstName: Yup.string()
       .required('First name is required')
       .min(2, 'First name must be at least 2 characters')
-      .max(50, 'First name must be less than 50 characters'),
+      .max(50, 'First name must be less than 50 characters')
+      .matches(/^[A-Za-z\s]+$/, 'First name should contain only alphabets'),
     lastName: Yup.string()
-      .max(50, 'Last name must be less than 50 characters'),
+      .max(50, 'Last name must be less than 50 characters')
+      .matches(/^[A-Za-z\s]+$/, 'Last name should contain only alphabets')
+      .nullable(),
     phone: Yup.string()
       .required('Phone number is required')
-      .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits'),
+      .matches(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
     gender: Yup.string()
       .required('Gender is required')
       .oneOf(['male', 'female', 'other'], 'Please select a valid gender'),
@@ -131,7 +134,7 @@ const EditProfile = () => {
             onSubmit={handleSubmit}
             enableReinitialize
           >
-            {({ isSubmitting, errors, touched }) => (
+            {({ isSubmitting, errors, touched, setFieldValue }) => (
               <Form className="space-y-6">
                 {/* First Name */}
                 <div>
@@ -146,11 +149,20 @@ const EditProfile = () => {
                     name="firstName"
                     type="text"
                     placeholder="Enter your first name"
-                    className={`mt-1 w-full rounded-md border ${
-                      errors.firstName && touched.firstName
-                        ? 'border-red-300'
-                        : 'border-blue-300'
-                    } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`mt-1 w-full rounded-md border ${errors.firstName && touched.firstName
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-blue-300 focus:ring-blue-500'
+                      } p-2 focus:outline-none focus:ring-2`}
+                    onKeyPress={(e) => {
+                      const char = String.fromCharCode(e.which);
+                      if (!/[A-Za-z\s]/.test(char)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                      setFieldValue('firstName', value);
+                    }}
                   />
                   <ErrorMessage
                     name="firstName"
@@ -172,11 +184,20 @@ const EditProfile = () => {
                     name="lastName"
                     type="text"
                     placeholder="Enter your last name"
-                    className={`mt-1 w-full rounded-md border ${
-                      errors.lastName && touched.lastName
-                        ? 'border-red-300'
-                        : 'border-blue-300'
-                    } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`mt-1 w-full rounded-md border ${errors.lastName && touched.lastName
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-blue-300 focus:ring-blue-500'
+                      } p-2 focus:outline-none focus:ring-2`}
+                    onKeyPress={(e) => {
+                      const char = String.fromCharCode(e.which);
+                      if (!/[A-Za-z\s]/.test(char)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                      setFieldValue('lastName', value);
+                    }}
                   />
                   <ErrorMessage
                     name="lastName"
@@ -222,9 +243,21 @@ const EditProfile = () => {
                       name="phone"
                       type="tel"
                       placeholder="Phone Number"
-                      className={`flex-1 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.phone && touched.phone ? 'border-red-300' : ''
-                      }`}
+                      maxLength="10"
+                      className={`flex-1 p-2 focus:outline-none focus:ring-2 ${errors.phone && touched.phone
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'focus:ring-blue-500'
+                        }`}
+                      onKeyPress={(e) => {
+                        const char = String.fromCharCode(e.which);
+                        if (!/[0-9]/.test(char)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                        setFieldValue('phone', value);
+                      }}
                     />
                   </div>
                   <ErrorMessage

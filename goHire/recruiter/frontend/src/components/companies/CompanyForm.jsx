@@ -19,14 +19,39 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
     companyName: Yup.string()
       .required('Company name is required')
       .min(2, 'Company name must be at least 2 characters')
-      .max(100, 'Company name must be less than 100 characters'),
+      .max(100, 'Company name must be less than 100 characters')
+      .matches(/^[A-Za-z\s]+$/, 'Company name should contain only alphabets'),
     website: Yup.string()
       .required('Website is required')
-      .url('Please enter a valid website URL (e.g., https://www.example.com)'),
+      .test('is-valid-url', 'Please enter a valid website URL (e.g., https://www.example.com)', (value) => {
+        if (!value) return false;
+        try {
+          const url = new URL(value);
+          // Check for valid protocols
+          return ['http:', 'https:'].includes(url.protocol);
+        } catch {
+          // If URL constructor fails, try regex validation
+          const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+          return urlRegex.test(value);
+        }
+      })
+      .test('no-invalid-chars', 'Please enter a valid website URL', (value) => {
+        if (!value) return false;
+        // Reject URLs with suspicious patterns
+        if (value.includes('..')) {
+          return false;
+        }
+        // Reject URLs with // that don't start with http:// or https://
+        if (value.includes('//') && !value.startsWith('http://') && !value.startsWith('https://')) {
+          return false;
+        }
+        return true;
+      }),
     location: Yup.string()
       .required('Location is required')
       .min(2, 'Location must be at least 2 characters')
-      .max(200, 'Location must be less than 200 characters'),
+      .max(200, 'Location must be less than 200 characters')
+      .matches(/^[A-Za-z\s,]+$/, 'Location should contain only alphabets, spaces, and commas'),
     logo: Yup.mixed()
       .nullable()
       .test('fileSize', 'Logo file size must be less than 5MB', (value) => {
@@ -37,16 +62,18 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
         if (!value) return true; // Optional field
         return ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(value.type);
       }),
-    proofDocument: Yup.mixed()
-      .required('Proof document is required')
-      .test('fileSize', 'Proof document file size must be less than 10MB', (value) => {
-        if (!value) return false;
-        return value.size <= 10 * 1024 * 1024;
-      })
-      .test('fileType', 'Proof document must be a PDF, JPG, or PNG file', (value) => {
-        if (!value) return false;
-        return ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'].includes(value.type);
-      }),
+    proofDocument: showProofDocument
+      ? Yup.mixed()
+          .required('Proof document is required')
+          .test('fileSize', 'Proof document file size must be less than 10MB', (value) => {
+            if (!value) return false;
+            return value.size <= 10 * 1024 * 1024;
+          })
+          .test('fileType', 'Proof document must be a PDF, JPG, or PNG file', (value) => {
+            if (!value) return false;
+            return ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'].includes(value.type);
+          })
+      : Yup.mixed().nullable(),
   });
 
   // Default initial values
@@ -74,7 +101,7 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
       onSubmit={handleFormSubmit}
       enableReinitialize
     >
-      {({ setFieldValue, values, errors, touched }) => (
+      {({ setFieldValue, setFieldTouched, values, errors, touched }) => (
         <Form className="space-y-6">
           {/* Company Name */}
           <div>
@@ -89,11 +116,18 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
               name="companyName"
               type="text"
               placeholder="Enter company name"
+              onKeyPress={(e) => {
+                // Only allow alphabets and spaces
+                const char = String.fromCharCode(e.which);
+                if (!/[A-Za-z\s]/.test(char)) {
+                  e.preventDefault();
+                }
+              }}
               className={`mt-1 w-full rounded-md border ${
                 errors.companyName && touched.companyName
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2`}
             />
             <ErrorMessage
               name="companyName"
@@ -117,9 +151,9 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
               placeholder="https://www.example.com"
               className={`mt-1 w-full rounded-md border ${
                 errors.website && touched.website
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2`}
             />
             <ErrorMessage
               name="website"
@@ -141,11 +175,18 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
               name="location"
               type="text"
               placeholder="Enter company location (e.g., City, State, Country)"
+              onKeyPress={(e) => {
+                // Only allow alphabets, spaces, and commas
+                const char = String.fromCharCode(e.which);
+                if (!/[A-Za-z\s,]/.test(char)) {
+                  e.preventDefault();
+                }
+              }}
               className={`mt-1 w-full rounded-md border ${
                 errors.location && touched.location
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2`}
             />
             <ErrorMessage
               name="location"
@@ -176,9 +217,9 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
               }}
               className={`mt-1 w-full rounded-md border ${
                 errors.logo && touched.logo
-                  ? 'border-red-300'
-                  : 'border-blue-300'
-              } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
+                  ? 'border-red-500 focus:ring-red-500'
+                  : 'border-blue-300 focus:ring-blue-500'
+              } p-2 focus:outline-none focus:ring-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
             />
             {values.logo && (
               <p className="mt-1 text-sm text-gray-600">
@@ -227,6 +268,7 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
                 onChange={(event) => {
                   const file = event.currentTarget.files[0];
                   setFieldValue('proofDocument', file);
+                  setFieldTouched('proofDocument', true);
                   
                   // Create preview URL
                   if (file) {
@@ -243,11 +285,14 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
                     }
                   }
                 }}
+                onBlur={() => {
+                  setFieldTouched('proofDocument', true);
+                }}
                 className={`mt-1 w-full rounded-md border ${
                   errors.proofDocument && touched.proofDocument
-                    ? 'border-red-300'
-                    : 'border-blue-300'
-                } p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-blue-300 focus:ring-blue-500'
+                } p-2 focus:outline-none focus:ring-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
               />
               {values.proofDocument && (
                 <div className="mt-2">

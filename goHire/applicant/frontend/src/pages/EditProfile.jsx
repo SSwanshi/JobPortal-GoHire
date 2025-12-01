@@ -19,6 +19,9 @@ const EditProfile = () => {
   });
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState({ strength: 0, text: '', color: '' });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -50,31 +53,29 @@ const EditProfile = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-
-    // Real-time validation (only validate if field has content)
+    // Real-time validation for all fields
     if (name === 'firstName' || name === 'lastName') {
-      if (value.trim().length > 0) {
-        validateName(name, value);
-      }
+      validateName(name, value);
     } else if (name === 'email') {
-      if (value.trim().length > 0) {
-        validateEmail(value);
-      }
+      validateEmail(value);
     } else if (name === 'phone') {
-      if (value.trim().length > 0) {
-        validatePhone(value);  
-      }
+      validatePhone(value);
     } else if (name === 'newPassword') {
+      validateNewPassword(value);
       checkPasswordStrength(value);
+      // Re-validate confirm password if it has a value
+      if (formData.confirmNewPassword) {
+        validateConfirmPassword(formData.confirmNewPassword, value);
+      }
+    } else if (name === 'confirmNewPassword') {
+      validateConfirmPassword(value, formData.newPassword);
+    } else if (name === 'currentPassword') {
+      validateCurrentPassword(value);
     }
   };
 
   const validateName = (fieldName, name) => {
-    // Allow letters, spaces, hyphens, and apostrophes
+    // Allow only letters and spaces (no special characters)
     if (!name || name.trim().length === 0) {
       setErrors((prev) => ({
         ...prev,
@@ -82,31 +83,113 @@ const EditProfile = () => {
       }));
       return false;
     }
-    const isValid = /^[A-Za-z\s'-]+$/.test(name) && name.trim().length >= 2;
+    const isValid = /^[A-Za-z\s]+$/.test(name) && name.trim().length >= 2;
     setErrors((prev) => ({
       ...prev,
-      [fieldName]: !isValid ? `${fieldName === 'firstName' ? 'First' : 'Last'} name should contain at least 2 characters and only letters, spaces, hyphens, or apostrophes` : '',
+      [fieldName]: !isValid ? `${fieldName === 'firstName' ? 'First' : 'Last'} name should contain at least 2 characters and only letters and spaces (no special characters allowed)` : '',
     }));
     return isValid;
   };
-
-  const validDomains = ['gmail', 'yahoo', 'outlook', 'hotmail', 'icloud', 'aol', 'protonmail', 'zoho', 'example', 'company', 'iiits', 'google', 'apple', 'sbi', 'flipkart', 'amazon', 'hdfc'];
-  const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'co', 'io', 'me', 'app', 'dev', 'info', 'biz', 'xyz', 'online', 'site', 'us', 'uk', 'ca', 'au', 'in', 'de', 'fr', 'tv', 'fm', 'ai', 'store', 'tech', 'blog', 'news', 'media', 'cloud', 'live', 'club', 'shop', 'team', 'space', 'agency'];
 
   const validateEmail = (email) => {
     if (!email || email.trim().length === 0) {
       setErrors((prev) => ({ ...prev, email: 'Email is required' }));
       return false;
     }
-    // Basic email pattern validation - more flexible
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailPattern.test(email)) {
-      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
+
+    // Check for basic structure
+    if (!email.includes('@')) {
+      setErrors((prev) => ({ ...prev, email: 'Email must contain @ symbol' }));
       return false;
     }
 
-    // Don't block on domain/TLD whitelist - just validate format
-    // This allows any valid email format to pass
+    const parts = email.split('@');
+    if (parts.length !== 2) {
+      setErrors((prev) => ({ ...prev, email: 'Email must contain exactly one @ symbol' }));
+      return false;
+    }
+
+    const [localPart, domainPart] = parts;
+
+    // Validate local part (before @)
+    if (!localPart || localPart.length === 0) {
+      setErrors((prev) => ({ ...prev, email: 'Email must have text before @ symbol' }));
+      return false;
+    }
+
+    if (localPart.length > 64) {
+      setErrors((prev) => ({ ...prev, email: 'Text before @ is too long (max 64 characters)' }));
+      return false;
+    }
+
+    // Check for invalid characters in local part
+    if (!/^[a-zA-Z0-9._%+-]+$/.test(localPart)) {
+      setErrors((prev) => ({ ...prev, email: 'Email contains invalid characters before @' }));
+      return false;
+    }
+
+    // Check for consecutive dots
+    if (localPart.includes('..')) {
+      setErrors((prev) => ({ ...prev, email: 'Email cannot have consecutive dots' }));
+      return false;
+    }
+
+    // Check if starts or ends with dot
+    if (localPart.startsWith('.') || localPart.endsWith('.')) {
+      setErrors((prev) => ({ ...prev, email: 'Email cannot start or end with a dot before @' }));
+      return false;
+    }
+
+    // Validate domain part (after @)
+    if (!domainPart || domainPart.length === 0) {
+      setErrors((prev) => ({ ...prev, email: 'Email must have a domain after @ symbol' }));
+      return false;
+    }
+
+    if (!domainPart.includes('.')) {
+      setErrors((prev) => ({ ...prev, email: 'Domain must contain at least one dot (e.g., .com)' }));
+      return false;
+    }
+
+    // Check domain format
+    if (!/^[a-zA-Z0-9.-]+$/.test(domainPart)) {
+      setErrors((prev) => ({ ...prev, email: 'Domain contains invalid characters' }));
+      return false;
+    }
+
+    const domainParts = domainPart.split('.');
+    
+    // Check if domain has at least two parts (e.g., gmail.com)
+    if (domainParts.length < 2) {
+      setErrors((prev) => ({ ...prev, email: 'Domain must have at least two parts (e.g., gmail.com)' }));
+      return false;
+    }
+
+    // Validate each domain part
+    for (let part of domainParts) {
+      if (!part || part.length === 0) {
+        setErrors((prev) => ({ ...prev, email: 'Domain has empty parts' }));
+        return false;
+      }
+      if (part.startsWith('-') || part.endsWith('-')) {
+        setErrors((prev) => ({ ...prev, email: 'Domain parts cannot start or end with hyphen' }));
+        return false;
+      }
+    }
+
+    // Validate TLD (last part)
+    const tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2) {
+      setErrors((prev) => ({ ...prev, email: 'Domain extension must be at least 2 characters' }));
+      return false;
+    }
+
+    if (!/^[a-zA-Z]+$/.test(tld)) {
+      setErrors((prev) => ({ ...prev, email: 'Domain extension must contain only letters' }));
+      return false;
+    }
+
+    // All validations passed
     setErrors((prev) => ({ ...prev, email: '' }));
     return true;
   };
@@ -125,6 +208,81 @@ const EditProfile = () => {
       phone: !isValid ? 'Please enter a valid 10-digit phone number.' : '',
     }));
     return isValid;
+  };
+
+  const validateCurrentPassword = (password) => {
+    // Only validate if user is trying to change password
+    if (formData.newPassword || formData.confirmNewPassword) {
+      if (!password || password.trim().length === 0) {
+        setErrors((prev) => ({ ...prev, currentPassword: 'Current password is required to change password' }));
+        return false;
+      }
+      setErrors((prev) => ({ ...prev, currentPassword: '' }));
+      return true;
+    }
+    setErrors((prev) => ({ ...prev, currentPassword: '' }));
+    return true;
+  };
+
+  const validateNewPassword = (password) => {
+    // Only validate if user entered current password or confirm password
+    if (!formData.currentPassword && !formData.confirmNewPassword && !password) {
+      setErrors((prev) => ({ ...prev, newPassword: '' }));
+      return true;
+    }
+
+    if ((formData.currentPassword || formData.confirmNewPassword) && (!password || password.trim().length === 0)) {
+      setErrors((prev) => ({ ...prev, newPassword: 'New password is required' }));
+      return false;
+    }
+
+    if (password && password.length < 8) {
+      setErrors((prev) => ({ ...prev, newPassword: 'Password must be at least 8 characters long' }));
+      return false;
+    }
+
+    if (password && password.length > 0) {
+      // Check for at least one letter
+      const hasLetter = /[a-zA-Z]/.test(password);
+      
+      if (!hasLetter) {
+        setErrors((prev) => ({ ...prev, newPassword: 'Password must contain at least one letter' }));
+        return false;
+      }
+
+      // Check for at least 2 special characters
+      const specialChars = password.match(/[^a-zA-Z0-9]/g);
+      const specialCharCount = specialChars ? specialChars.length : 0;
+
+      if (specialCharCount < 2) {
+        setErrors((prev) => ({ ...prev, newPassword: 'Password must contain at least 2 special characters' }));
+        return false;
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, newPassword: '' }));
+    return true;
+  };
+
+  const validateConfirmPassword = (confirmPassword, newPassword) => {
+    // Only validate if user entered new password or current password
+    if (!formData.currentPassword && !newPassword && !confirmPassword) {
+      setErrors((prev) => ({ ...prev, confirmNewPassword: '' }));
+      return true;
+    }
+
+    if ((formData.currentPassword || newPassword) && (!confirmPassword || confirmPassword.trim().length === 0)) {
+      setErrors((prev) => ({ ...prev, confirmNewPassword: 'Please confirm your new password' }));
+      return false;
+    }
+
+    if (confirmPassword !== newPassword) {
+      setErrors((prev) => ({ ...prev, confirmNewPassword: 'Passwords do not match' }));
+      return false;
+    }
+
+    setErrors((prev) => ({ ...prev, confirmNewPassword: '' }));
+    return true;
   };
 
   const checkPasswordStrength = (password) => {
@@ -175,18 +333,12 @@ const EditProfile = () => {
 
     // Password validation
     if (formData.currentPassword || formData.newPassword || formData.confirmNewPassword) {
-      if (!formData.currentPassword || !formData.newPassword || !formData.confirmNewPassword) {
-        showToast('All password fields are required to change password', 'error');
-        return;
-      }
+      const isCurrentPasswordValid = validateCurrentPassword(formData.currentPassword);
+      const isNewPasswordValid = validateNewPassword(formData.newPassword);
+      const isConfirmPasswordValid = validateConfirmPassword(formData.confirmNewPassword, formData.newPassword);
 
-      if (formData.newPassword !== formData.confirmNewPassword) {
-        showToast('New passwords do not match', 'error');
-        return;
-      }
-
-      if (formData.newPassword.length < 4) {
-        showToast('Password must be at least 4 characters long', 'error');
+      if (!isCurrentPasswordValid || !isNewPasswordValid || !isConfirmPasswordValid) {
+        showToast('Please fix the password validation errors', 'error');
         return;
       }
     }
@@ -268,11 +420,15 @@ const EditProfile = () => {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`mt-1 block text-black w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 ${
+                        errors.firstName 
+                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       required
                     />
                     {errors.firstName && (
-                      <p className="text-xs mt-1 text-red-500">{errors.firstName}</p>
+                      <p className="text-xs mt-1 text-red-600 font-medium">{errors.firstName}</p>
                     )}
                   </div>
 
@@ -283,11 +439,15 @@ const EditProfile = () => {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`mt-1 block text-black w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 ${
+                        errors.lastName 
+                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       required
                     />
                     {errors.lastName && (
-                      <p className="text-xs mt-1 text-red-500">{errors.lastName}</p>
+                      <p className="text-xs mt-1 text-red-600 font-medium">{errors.lastName}</p>
                     )}
                   </div>
 
@@ -298,10 +458,14 @@ const EditProfile = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`mt-1 block text-black w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 ${
+                        errors.email 
+                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       required
                     />
-                    {errors.email && <p className="text-xs mt-1 text-red-500">{errors.email}</p>}
+                    {errors.email && <p className="text-xs mt-1 text-red-600 font-medium">{errors.email}</p>}
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg">
@@ -311,10 +475,14 @@ const EditProfile = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`mt-1 block text-black w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 ${
+                        errors.phone 
+                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
                       required
                     />
-                    {errors.phone && <p className="text-xs mt-1 text-red-500">{errors.phone}</p>}
+                    {errors.phone && <p className="text-xs mt-1 text-red-600 font-medium">{errors.phone}</p>}
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg">
@@ -343,25 +511,75 @@ const EditProfile = () => {
                         <label className="block text-sm font-medium text-blue-700">
                           Current Password
                         </label>
-                        <input
-                          type="password"
-                          name="currentPassword"
-                          value={formData.currentPassword}
-                          onChange={handleChange}
-                          className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showCurrentPassword ? "text" : "password"}
+                            name="currentPassword"
+                            value={formData.currentPassword}
+                            onChange={handleChange}
+                            className={`mt-1 block text-black w-full border rounded-md py-2 px-3 pr-10 focus:outline-none focus:ring-2 ${
+                              errors.currentPassword 
+                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-600 hover:text-gray-800"
+                          >
+                            {showCurrentPassword ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        {errors.currentPassword && (
+                          <p className="text-xs mt-1 text-red-600 font-medium">{errors.currentPassword}</p>
+                        )}
                       </div>
 
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <label className="block text-sm font-medium text-blue-700">New Password</label>
-                        <input
-                          type="password"
-                          name="newPassword"
-                          value={formData.newPassword}
-                          onChange={handleChange}
-                          className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        {formData.newPassword && (
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            name="newPassword"
+                            value={formData.newPassword}
+                            onChange={handleChange}
+                            className={`mt-1 block text-black w-full border rounded-md py-2 px-3 pr-10 focus:outline-none focus:ring-2 ${
+                              errors.newPassword 
+                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-600 hover:text-gray-800"
+                          >
+                            {showNewPassword ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        {errors.newPassword && (
+                          <p className="text-xs mt-1 text-red-600 font-medium">{errors.newPassword}</p>
+                        )}
+                        {!errors.newPassword && formData.newPassword && (
                           <>
                             <div className="mt-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div
@@ -380,24 +598,41 @@ const EditProfile = () => {
                         <label className="block text-sm font-medium text-blue-700">
                           Confirm New Password
                         </label>
-                        <input
-                          type="password"
-                          name="confirmNewPassword"
-                          value={formData.confirmNewPassword}
-                          onChange={handleChange}
-                          className="mt-1 block text-black w-full border border-blue-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        {formData.confirmNewPassword && (
-                          <p
-                            className={`text-xs mt-1 ${
-                              formData.newPassword === formData.confirmNewPassword
-                                ? 'text-green-600'
-                                : 'text-red-600'
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="confirmNewPassword"
+                            value={formData.confirmNewPassword}
+                            onChange={handleChange}
+                            className={`mt-1 block text-black w-full border rounded-md py-2 px-3 pr-10 focus:outline-none focus:ring-2 ${
+                              errors.confirmNewPassword 
+                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500'
                             }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-600 hover:text-gray-800"
                           >
-                            {formData.newPassword === formData.confirmNewPassword
-                              ? 'Passwords match'
-                              : 'Passwords do not match'}
+                            {showConfirmPassword ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        {errors.confirmNewPassword && (
+                          <p className="text-xs mt-1 text-red-600 font-medium">{errors.confirmNewPassword}</p>
+                        )}
+                        {!errors.confirmNewPassword && formData.confirmNewPassword && formData.newPassword === formData.confirmNewPassword && (
+                          <p className="text-xs mt-1 text-green-600 font-medium">
+                            ✓ Passwords match
                           </p>
                         )}
                       </div>
