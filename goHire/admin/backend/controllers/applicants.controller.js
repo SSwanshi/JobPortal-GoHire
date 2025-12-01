@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const connectApplicantDB = require('../config/applicantDB');
 
 function createUserModel(connection) {
+  if (connection.models.User) {
+    return connection.models.User; // reuse existing model
+  }
   const applicantSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -19,6 +22,7 @@ const getApplicants = async (req, res) => {
     const applicantConn = await connectApplicantDB();
     const UserModel = createUserModel(applicantConn);
     const applicants = await UserModel.find({});
+    console.log("hello")
     res.json(applicants);
   } catch (error) {
     console.error("Error fetching applicants:", error);

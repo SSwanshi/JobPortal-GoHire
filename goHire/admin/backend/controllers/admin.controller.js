@@ -3,6 +3,9 @@ const connectApplicantDB = require('../config/applicantDB');
 const { initGridFS } = require('../db/gridfs');
 
 function createPremiumUserModel(connection) {
+  if (connection.models.Premium_User) {
+    return connection.models.Premium_User; // reuse existing model
+  }
   const premiumUserSchema = new mongoose.Schema({
     userId: {
       type: String,
