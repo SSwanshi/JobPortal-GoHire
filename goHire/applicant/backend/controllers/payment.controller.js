@@ -1,5 +1,42 @@
 const User = require('../models/user');
 const PremiumUser = require('../models/premium_user');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+const createPaymentIntent = async (req, res) => {
+  try {
+    const { amount, plan } = req.body;
+    const userId = req.session.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Please login to buy Premium.' });
+    }
+
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: parseInt(amount) * 100, // Convert to cents
+      currency: 'inr',
+      metadata: {
+        userId: user.userId,
+        email: user.email,
+        plan: plan
+      }
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id
+    });
+
+  } catch (error) {
+    console.error('Payment intent error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+};
 
 const getPaymentPage = async (req, res) => {
   try {
@@ -12,20 +49,7 @@ const getPaymentPage = async (req, res) => {
 
 const processPayment = async (req, res) => {
   try {
-    const {
-      paymentMethod,
-      amount,
-      cardNumber,
-      expiryDate,
-      cvv,
-      cardholderName,
-      bankName,
-      bankUserId,
-      upiId,
-      upiApp,
-      upiName
-    } = req.body;
-
+    const { paymentIntentId, plan, amount } = req.body;
     const userId = req.session.user?.id;
 
     if (!userId) {
@@ -37,8 +61,18 @@ const processPayment = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Generate transaction ID
-    const transactionId = `TXN${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Verify payment with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ error: 'Payment not completed' });
+    }
+
+    // Check if already premium
+    const existingPremiumUser = await PremiumUser.findOne({ email: user.email });
+    if (existingPremiumUser) {
+      return res.status(400).json({ error: 'User is already a premium member' });
+    }
 
     // Create premium user
     const premiumUser = new PremiumUser({
@@ -56,21 +90,20 @@ const processPayment = async (req, res) => {
 
     // Determine subscription plan based on amount
     let subscriptionPlan = 'Monthly Premium Plan';
-    if (amount === '2999') {
+    if (plan === 'annual' || amount === '2999') {
       subscriptionPlan = 'Annual Premium Plan';
     }
 
     res.json({
       success: true,
-      transactionId,
-      amount,
+      transactionId: paymentIntent.id,
+      amount: (paymentIntent.amount / 100).toString(),
       subscriptionPlan,
       paymentDetails: {
-        method: paymentMethod,
-        amount,
-        transactionId,
-        cardNumber: cardNumber ? cardNumber.slice(-4) : undefined,
-        cardholderName
+        method: 'stripe',
+        amount: (paymentIntent.amount / 100).toString(),
+        transactionId: paymentIntent.id,
+        status: paymentIntent.status
       }
     });
 
@@ -115,6 +148,7 @@ const getPrivacy = async (req, res) => {
 };
 
 module.exports = {
+  createPaymentIntent,
   getPaymentPage,
   processPayment,
   getReceipt,
