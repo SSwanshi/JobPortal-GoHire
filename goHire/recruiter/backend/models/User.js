@@ -10,7 +10,9 @@ const UserSchema = new mongoose.Schema({
   profileImage: {
     data: Buffer,
     contentType: String,
-  }
+  },
+  otp: { type: String, default: null },
+  otpExpiry: { type: Date, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model("RecruiterUser", UserSchema);

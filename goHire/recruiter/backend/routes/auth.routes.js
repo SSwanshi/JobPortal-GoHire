@@ -12,4 +12,9 @@ router.put('/user/profile', authController.updateProfile);
 router.post('/user/profile-image', upload.single('image'), authController.uploadProfileImage);
 router.get('/profile-image/:id', authController.getProfileImage);
 
+// Forgot password routes
+router.post('/forgot-password', authController.sendForgotPasswordOtp);
+router.post('/verify-otp', authController.verifyOtp);
+router.post('/reset-password', authController.resetPassword);
+
 module.exports = router;

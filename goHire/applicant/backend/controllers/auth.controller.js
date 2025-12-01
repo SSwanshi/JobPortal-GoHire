@@ -49,15 +49,29 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and password are required' 
+      });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
     req.session.user = {
@@ -83,7 +97,10 @@ const login = async (req, res) => {
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error. Please try again.' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error. Please try again.' 
+    });
   }
 };
 

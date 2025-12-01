@@ -11,7 +11,7 @@ const Dashboard = () => {
   const { user, isAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
-    const fetchStatistics = async () => {
+    const fetchStatistics = async () => { 
       try {
         const data = await applicationsApi.getStatistics();
         setStatistics(data);

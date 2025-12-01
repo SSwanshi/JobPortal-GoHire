@@ -18,11 +18,27 @@ const Login = () => {
 
     try {
       const response = await login(email, password);
-      if (response.success) {
+      if (response && response.success) {
         navigate("/");
+      } else {
+        setError(response?.message || "Login failed. Please try again.");
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.error || "Login failed. Please try again.");
+      console.error('Login error:', err);
+      let errorMessage = "Login failed. Please try again.";
+      
+      // Check for network errors
+      if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.message?.includes('connect to server')) {
+        errorMessage = "Cannot connect to server. Please ensure the backend server is running on port 3000.";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

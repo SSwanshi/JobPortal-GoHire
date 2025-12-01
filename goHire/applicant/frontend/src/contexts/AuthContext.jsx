@@ -28,11 +28,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authApi.login(email, password);
-      if (response.user) {
+      if (response && response.user) {
         setUser(response.user);
       }
       return response;
     } catch (error) {
+      console.error('Login error in AuthContext:', error);
+      console.error('Error response:', error.response?.data);
       throw error;
     }
   };
