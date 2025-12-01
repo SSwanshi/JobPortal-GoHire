@@ -76,6 +76,13 @@ export const adminApi = {
   getProofDocumentUrl: (proofId) => {
     return `${import.meta.env.VITE_API_BASE || 'http://localhost:9000'}/api/admin/company/proof/${proofId}`;
   },
+
+  getProofDocument: async (proofId) => {
+    const response = await api.get(`/api/admin/company/proof/${proofId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 export default adminApi;

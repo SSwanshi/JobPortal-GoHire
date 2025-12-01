@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { adminApi } from '../../services/adminApi';
+import { decrementCount, fetchPendingVerificationsCount } from '../../store/slices/pendingVerificationsSlice';
 import Header from '../../components/common/Header';
 import Table, { TableRow, TableCell } from '../../components/ui/Table';
-import Badge from '../../components/ui/Badge';
 
 const CompaniesAwaitingVerification = () => {
+  const dispatch = useDispatch();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+    dispatch(fetchPendingVerificationsCount());
+  }, [dispatch]);
 
   const fetchCompanies = async () => {
     try {
@@ -30,16 +33,25 @@ const CompaniesAwaitingVerification = () => {
     try {
       await adminApi.verifyCompany(id);
       setCompanies(companies.filter(company => company._id !== id));
+      dispatch(decrementCount());
       alert('Company verified successfully!');
     } catch {
       alert('Failed to verify company');
     }
   };
 
-  const handleViewProof = (proofId) => {
+  const handleViewProof = async (proofId) => {
     if (proofId) {
-      const proofUrl = adminApi.getProofDocumentUrl(proofId);
-      window.open(proofUrl, '_blank');
+      try {
+        const blob = await adminApi.getProofDocument(proofId);
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        // Clean up the object URL after a delay to free memory
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      } catch (error) {
+        console.error('Error loading proof document:', error);
+        alert('Failed to load proof document');
+      }
     }
   };
 

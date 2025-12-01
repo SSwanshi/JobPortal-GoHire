@@ -8,8 +8,6 @@ const connectRecruiterDB = async () => {
     recruiterConn = await mongoose.createConnection(
       process.env.MONGO_URI_RECRUITERS || 'mongodb://localhost:27017/recruiter_db',
       {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         serverSelectionTimeoutMS: 20000,
       }
     );

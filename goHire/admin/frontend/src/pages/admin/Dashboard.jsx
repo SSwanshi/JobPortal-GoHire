@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { adminApi } from '../../services/adminApi';
+import { fetchPendingVerificationsCount } from '../../store/slices/pendingVerificationsSlice';
 import Card from '../../components/ui/Card';
 import Header from '../../components/common/Header';
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
+  const { count: pendingCount } = useSelector((state) => state.pendingVerifications);
   const [stats, setStats] = useState({
     applicants: 0,
     recruiters: 0,
@@ -17,7 +21,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+    dispatch(fetchPendingVerificationsCount());
+  }, [dispatch]);
 
   const fetchStats = async () => {
     try {
@@ -66,6 +71,35 @@ const Dashboard = () => {
   return (
     <div>
       <Header title="Dashboard" />
+      
+      {/* View Awaiting Verification Button */}
+      <div className="mt-6 mb-6">
+        <Link to="/companies/awaiting-verification">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-orange-500 rounded-lg p-3 mr-4">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">View Awaiting Verification</p>
+                  <p className="text-sm text-gray-500">Companies pending verification</p>
+                </div>
+              </div>
+              {pendingCount > 0 && (
+                <div className="relative">
+                  <div className="bg-red-500 text-white rounded-full px-3 py-1 text-sm font-semibold flex items-center justify-center min-w-[24px] h-6">
+                    {pendingCount}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {statCards.map((stat) => (
           <Link key={stat.name} to={stat.href}>

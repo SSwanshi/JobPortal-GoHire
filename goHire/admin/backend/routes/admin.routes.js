@@ -5,7 +5,14 @@ const adminController = require('../controllers/admin.controller');
 // Get premium users
 router.get('/premium-users', adminController.getPremiumUsers);
 
-// Get proof document
+// Get proof document - handle OPTIONS for CORS preflight
+router.options('/company/proof/:proofId', (req, res) => {
+  res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(200);
+});
+
 router.get('/company/proof/:proofId', adminController.getProofDocument);
 
 module.exports = router;

@@ -81,6 +81,11 @@ const getPremiumUsers = async (req, res) => {
 const getProofDocument = async (req, res) => {
   try {
     const { proofId } = req.params;
+    
+    if (!proofId || !mongoose.Types.ObjectId.isValid(proofId)) {
+      return res.status(400).json({ error: "Invalid proof document ID" });
+    }
+
     const { gfs } = await initGridFS();
     
     if (!gfs) {
@@ -96,14 +101,47 @@ const getProofDocument = async (req, res) => {
     }
 
     const file = fileData[0];
+    
+    // Set CORS headers FIRST, before any other headers
+    const origin = req.headers.origin;
+    if (origin) {
+      res.set('Access-Control-Allow-Origin', origin);
+    } else {
+      res.set('Access-Control-Allow-Origin', '*');
+    }
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.set('Access-Control-Allow-Credentials', 'true');
+    
+    // Set content headers
+    res.set('Content-Type', file.contentType || 'application/pdf');
+    res.set('Content-Disposition', `inline; filename="${file.filename || 'proof-document'}"`);
+    res.set('Cache-Control', 'public, max-age=3600');
+
     const readStream = gfs.openDownloadStream(file._id);
 
-    res.set('Content-Type', file.contentType);
-    res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
+    // Handle stream errors
+    readStream.on('error', (error) => {
+      console.error("Error streaming proof document:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to stream document" });
+      }
+    });
+
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error("Error sending response:", error);
+    });
+
     readStream.pipe(res);
   } catch (error) {
     console.error("Error downloading proof document:", error);
-    res.status(500).json({ error: "Failed to download document" });
+    if (!res.headersSent) {
+      if (error.name === 'BSONTypeError' || error.message.includes('ObjectId')) {
+        return res.status(400).json({ error: "Invalid proof document ID format" });
+      }
+      res.status(500).json({ error: "Failed to download document" });
+    }
   }
 };
 

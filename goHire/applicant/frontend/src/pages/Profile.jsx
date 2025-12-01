@@ -183,6 +183,24 @@ const Profile = () => {
                 <div className="flex flex-col items-center">
                   {/* Profile Image */}
                   <div className="relative mb-4">
+                    {/* Premium Crown Icon */}
+                    {userData.isPremium && (
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
+                        <div className="relative group">
+                          <div className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-full p-2 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2L15 8.5L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L9 8.5L12 2Z" />
+                            </svg>
+                          </div>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                            Premium Member
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {userData.profileImageId ? (
                       <img
                         key={imageTimestamp}

@@ -10,11 +10,16 @@ const AppliedJobSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phone: { type: String, required: true },
   gender: { type: String, required: true },
+  password: { type: String }, // Added to match applicant model
+  memberSince: { type: Date }, // Added to match applicant model
   resumeId: { type: mongoose.Schema.Types.ObjectId, ref: 'uploads.files' },
   AppliedAt: { type: Date, default: Date.now },
   isSelected: { type: Boolean, default: false },
   isRejected: { type: Boolean, default: false }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  collection: 'applied_for_jobs' // Use the same collection name as applicant backend
+});
 
 // Get the appropriate connection to create the model (called at runtime)
 function getAppliedJobModel() {
@@ -23,19 +28,20 @@ function getAppliedJobModel() {
     const connection = applicantConn || mongoose;
     
     // Check if model already exists on this connection
-    if (connection.models && connection.models.AppliedJob) {
-      return connection.models.AppliedJob;
+    if (connection.models && connection.models['Applied_for_Jobs']) {
+      return connection.models['Applied_for_Jobs'];
     }
     
     // Create model on the appropriate connection
-    return connection.model('AppliedJob', AppliedJobSchema);
+    // Use 'Applied_for_Jobs' as model name to match applicant backend
+    return connection.model('Applied_for_Jobs', AppliedJobSchema);
   } catch (error) {
     console.error('Error getting AppliedJob model:', error);
     // Fallback to default mongoose connection
-    if (mongoose.models && mongoose.models.AppliedJob) {
-      return mongoose.models.AppliedJob;
+    if (mongoose.models && mongoose.models['Applied_for_Jobs']) {
+      return mongoose.models['Applied_for_Jobs'];
     }
-    return mongoose.model('AppliedJob', AppliedJobSchema);
+    return mongoose.model('Applied_for_Jobs', AppliedJobSchema);
   }
 }
 

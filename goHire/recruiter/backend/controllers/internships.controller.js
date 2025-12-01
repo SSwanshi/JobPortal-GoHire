@@ -27,8 +27,8 @@ const addInternship = async (req, res) => {
       intExpiry
     } = req.body;
 
-    if (!intTitle || !intDescription || !intRequirements || !intStipend ||
-      !intLocation || !intDuration || !intExperience || !intPositions || !intCompany || !intExpiry) {
+    if (!intTitle || !intDescription || !intRequirements || intStipend === undefined || intStipend === null ||
+      !intLocation || !intDuration || intExperience === undefined || intExperience === null || !intPositions || !intCompany || !intExpiry) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 

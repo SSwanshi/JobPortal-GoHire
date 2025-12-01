@@ -224,15 +224,30 @@ const CompanyForm = ({ initialValues, onSubmit, isSubmitting, submitButtonText =
           {/* Proof Document Upload */}
           {showProofDocument && (
             <div>
-              <label
-                htmlFor="proofDocument"
-                className="block text-sm font-semibold text-blue-800 mb-1"
-              >
-                Proof Document <span className="text-yellow-500">*</span>
-                <span className="text-gray-500 text-xs font-normal ml-2">
-                  (PDF, JPG, PNG, max 10MB)
-                </span>
-              </label>
+              <div className="flex items-center gap-2 mb-1">
+                <label
+                  htmlFor="proofDocument"
+                  className="block text-sm font-semibold text-blue-800"
+                >
+                  Proof Document
+                  <span className="text-gray-500 text-xs font-normal ml-2">
+                    (Optional - PDF, JPG, PNG, max 10MB)
+                  </span>
+                </label>
+                <div className="relative group">
+                  <button
+                    type="button"
+                    className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center text-xs font-bold cursor-help transition-colors"
+                    aria-label="Information about proof document"
+                  >
+                    i
+                  </button>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 pointer-events-none">
+                    This document is required as a proof whether this company is registered or not and you belong to this company
+                    <div className="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </div>
+              </div>
               <input
                 id="proofDocument"
                 name="proofDocument"

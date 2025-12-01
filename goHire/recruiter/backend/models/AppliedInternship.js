@@ -10,11 +10,16 @@ const AppliedInternshipSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phone: { type: String, required: true },
   gender: { type: String, required: true },
+  password: { type: String }, // Added to match applicant model
+  memberSince: { type: Date }, // Added to match applicant model
   resumeId: { type: mongoose.Schema.Types.ObjectId, ref: 'uploads.files' },
   AppliedAt: { type: Date, default: Date.now },
   isSelected: { type: Boolean, default: false },
   isRejected: { type: Boolean, default: false }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  collection: 'applied_for_internships' // Use the same collection name as applicant backend
+});
 
 // Get the appropriate connection to create the model (called at runtime)
 function getAppliedInternshipModel() {
@@ -23,19 +28,20 @@ function getAppliedInternshipModel() {
     const connection = applicantConn || mongoose;
     
     // Check if model already exists on this connection
-    if (connection.models && connection.models.AppliedInternship) {
-      return connection.models.AppliedInternship;
+    if (connection.models && connection.models['Applied_for_Internships']) {
+      return connection.models['Applied_for_Internships'];
     }
     
     // Create model on the appropriate connection
-    return connection.model('AppliedInternship', AppliedInternshipSchema);
+    // Use 'Applied_for_Internships' as model name to match applicant backend
+    return connection.model('Applied_for_Internships', AppliedInternshipSchema);
   } catch (error) {
     console.error('Error getting AppliedInternship model:', error);
     // Fallback to default mongoose connection
-    if (mongoose.models && mongoose.models.AppliedInternship) {
-      return mongoose.models.AppliedInternship;
+    if (mongoose.models && mongoose.models['Applied_for_Internships']) {
+      return mongoose.models['Applied_for_Internships'];
     }
-    return mongoose.model('AppliedInternship', AppliedInternshipSchema);
+    return mongoose.model('Applied_for_Internships', AppliedInternshipSchema);
   }
 }
 

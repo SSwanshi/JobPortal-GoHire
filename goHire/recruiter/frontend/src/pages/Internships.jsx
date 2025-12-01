@@ -57,7 +57,7 @@ const Internships = () => {
 
   const formatStipend = (stipend) => {
     if (!stipend) return 'N/A';
-    return `${stipend} K`;
+    return `${stipend} `;
   };
 
   const formatDuration = (duration) => {
