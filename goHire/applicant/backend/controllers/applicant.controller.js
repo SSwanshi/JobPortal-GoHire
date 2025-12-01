@@ -17,7 +17,7 @@ const getJobs = async (req, res) => {
     let { salaryMin, expMin, expMax, page, location } = req.query;
     page = parseInt(page) || 1;
     console.log(location);
-    const pageSize = 1;
+    const pageSize = 5;
     const filterCriteria = {};
 
     if (salaryMin) {
@@ -82,7 +82,7 @@ const getInternships = async (req, res) => {
 
     let { stipendMin, durationMin, durationMax, page, location } = req.query;
     page = parseInt(page) || 1;
-    const pageSize = 1;
+    const pageSize = 5;
     const filterCriteria = {};
     console.log(location)
     if (stipendMin !== undefined) {
