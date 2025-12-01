@@ -1,6 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import headerImage from '../assets/images/header_image.webp';
+import cardInternship from '../assets/images/card_internship.webp';
+import cardJob from '../assets/images/card_job.webp';
+import cardPremium from '../assets/images/card_premium.webp';
+import cardMore from '../assets/images/card_more.webp';
+import logoAmazon from '../assets/images/brand_logo_amazon.webp';
+import logoFlipkart from '../assets/images/brand_logo_flipkart.webp';
+import logoLoreal from '../assets/images/brand_logo_loreal.webp';
+import logoWalmart from '../assets/images/brand_logo_walmart.webp';
+import logoWipro from '../assets/images/brand_logo_wipro.webp';
+import logoAsianPaints from '../assets/images/brand_logo_asianpaints.webp';
+import logoHp from '../assets/images/brand_logo_hp.webp';
+import logoAditya from '../assets/images/brand_logo_aditya.webp';
 
 const Home = () => {
   const headerTextRef = useRef(null);
@@ -67,13 +79,14 @@ const Home = () => {
   }, []);
 
   const brandLogos = [
-    'brand_logo_amazon.webp',
-    'brand_logo_flipkart.webp',
-    'brand_logo_loreal.webp',
-    'brand_logo_walmart.webp',
-    'brand_logo_wipro.webp',
-    'brand_logo_asianpaints.webp',
-    'brand_logo_hp.webp',
+    logoAmazon,
+    logoFlipkart,
+    logoLoreal,
+    logoWalmart,
+    logoWipro,
+    logoAsianPaints,
+    logoHp,
+    logoAditya,
   ];
 
   return (
@@ -91,14 +104,13 @@ const Home = () => {
               <h1 className="text-5xl font-bold leading-tight">
                 {' '}
                 Unlock Seemless <span className="text-yellow-300">Career</span> Potential
-        </h1>
+              </h1>
               <p className="text-xl mt-6 text-blue-100 max-w-lg">
-                Explore opportunities from across the globe to grow, showcase skills, gain CV
-                points & get hired by your dream company.
-        </p>
+                Discover worldwide opportunities to enhance your career, demonstrate your skills, strengthen your CV, and connect with leading employers.
+              </p>
               <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center md:justify-start">
-            <Link
-              to="/jobs"
+                <Link
+                  to="/jobs"
                   className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 font-bold py-3 px-8 rounded-full transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
                 >
                   Find Jobs
@@ -147,8 +159,8 @@ const Home = () => {
                   <br />
                   Experience
                 </p>
-            <Link
-              to="/internships"
+                <Link
+                  to="/internships"
                   className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300 inline-block mt-2"
                 >
                   Find Internships
@@ -156,7 +168,7 @@ const Home = () => {
               </div>
               <div className="absolute right-0 bottom-0 h-full max-h-48 pointer-events-none">
                 <img
-                  src="/images/card_internship.webp"
+                  src={cardInternship}
                   alt="Student with internship materials"
                   className="h-full object-contain rounded-none"
                 />
@@ -180,7 +192,7 @@ const Home = () => {
               </div>
               <div className="absolute right-0 bottom-0 h-full max-h-48 pointer-events-none">
                 <img
-                  src="/images/card_job.webp"
+                  src={cardJob}
                   alt="Professional with job offers"
                   className="h-full object-contain rounded-none"
                 />
@@ -204,7 +216,7 @@ const Home = () => {
               </div>
               <div className="absolute right-0 bottom-0 h-full max-h-48 pointer-events-none">
                 <img
-                  src="/images/card_premium.webp"
+                  src={cardPremium}
                   alt="Trophy and competition"
                   className="h-full object-contain rounded-none"
                 />
@@ -220,15 +232,15 @@ const Home = () => {
                   smart minds
                 </p>
                 <Link
-                  to="/login"
+                  to="http://localhost:5175/login"
                   className="bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300 inline-block mt-2"
                 >
-                  Login as Applicant
+                  Login as Recruiter
                 </Link>
               </div>
               <div className="absolute right-0 bottom-0 h-full max-h-48 pointer-events-none">
                 <img
-                  src="/images/card_more.webp"
+                  src={cardMore}
                   alt="Resource box with tools"
                   className="h-full object-contain rounded-none"
                 />
@@ -240,13 +252,13 @@ const Home = () => {
 
       {/* Brand Logos Scrolling Section */}
       <section className="bg-white py-6 overflow-hidden">
-        <div className="container mx-auto px-4 relative">
+        <div className="w-full relative">
           <div className="overflow-hidden w-full">
             <div
               className="flex animate-scroll hover:animate-pause"
               style={{
-                width: 'calc(200px * 14)',
-                animation: 'scroll 30s linear infinite',
+                width: 'calc(200px * 16)',
+                animation: 'scroll 20s linear infinite',
               }}
             >
               {[...brandLogos, ...brandLogos].map((logo, index) => (
@@ -254,11 +266,7 @@ const Home = () => {
                   key={index}
                   className="flex-shrink-0 w-[200px] h-20 p-4 hover:transition-opacity duration-300 flex justify-center items-center"
                 >
-                  <img
-                    src={`/images/${logo}`}
-                    alt="Partner Logo"
-                    className="h-20 object-contain"
-                  />
+                  <img src={logo} alt="Partner Logo" className="h-20 object-contain" />
                 </div>
               ))}
             </div>
@@ -414,7 +422,7 @@ const Home = () => {
                 through GoHire.
               </p>
               <Link
-                to="/login"
+                to="http://localhost:5174/login"
                 className="bg-white text-blue-700 hover:bg-yellow-400 font-bold py-3 px-8 rounded-full transition-all duration-300 inline-block hover:shadow-lg transform hover:-translate-y-1"
               >
                 Get Started Now
@@ -439,7 +447,7 @@ const Home = () => {
               </div>
             </div>
           </div>
-      </div>
+        </div>
       </section>
     </div>
   );
