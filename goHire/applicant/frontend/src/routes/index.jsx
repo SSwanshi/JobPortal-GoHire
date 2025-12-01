@@ -24,6 +24,7 @@ import ApplyInternship from '../pages/ApplyInternship';
 import SearchResults from '../pages/SearchResults';
 import Terms from '../pages/Terms';
 import Privacy from '../pages/Privacy';
+import Contact from '../pages/ContactUs';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -64,6 +65,7 @@ const AppRoutes = () => {
           <Route path="search" element={<SearchResults />} />
           <Route path="terms" element={<Terms />} />
           <Route path="privacy" element={<Privacy />} />
+          <Route path="contact" element={<Contact />} />
         </Route>
 
         {/* Protected Routes */}
