@@ -66,7 +66,7 @@ const EditProfile = () => {
       }
     } else if (name === 'phone') {
       if (value.trim().length > 0) {
-        validatePhone(value);
+        validatePhone(value);  
       }
     } else if (name === 'newPassword') {
       checkPasswordStrength(value);
