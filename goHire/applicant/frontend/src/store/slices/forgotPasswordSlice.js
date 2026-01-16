@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../../services/authApi';
 
-// Async thunks
+
 export const sendOtp = createAsyncThunk(
   'forgotPassword/sendOtp',
   async (email, { rejectWithValue }) => {

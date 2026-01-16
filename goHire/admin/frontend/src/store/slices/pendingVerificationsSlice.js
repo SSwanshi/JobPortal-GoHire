@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { adminApi } from '../../services/adminApi';
 
-// Async thunk to fetch pending verifications count
 export const fetchPendingVerificationsCount = createAsyncThunk(
   'pendingVerifications/fetchCount',
   async () => {

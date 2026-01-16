@@ -17,4 +17,7 @@ router.post('/forgot-password', authController.sendForgotPasswordOtp);
 router.post('/verify-otp', authController.verifyOtp);
 router.post('/reset-password', authController.resetPassword);
 
+// Change password route (requires authentication)
+router.post('/change-password', authController.changePassword);
+
 module.exports = router;

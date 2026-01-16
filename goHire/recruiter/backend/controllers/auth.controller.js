@@ -531,6 +531,87 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Change password (for authenticated users)
+const changePassword = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated'
+      });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate all fields are provided
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password, new password, and confirm password are required'
+      });
+    }
+
+    // Validate new password length
+    if (newPassword.length < 4) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 4 characters long'
+      });
+    }
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password and confirm password do not match'
+      });
+    }
+
+    // Get user from database
+    const user = await User.findById(req.session.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password is incorrect'
+      });
+    }
+
+    // Check if new password is same as current password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be different from current password'
+      });
+    }
+
+    // Hash and update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   login,
   signup,
@@ -542,5 +623,6 @@ module.exports = {
   getProfileImage,
   sendForgotPasswordOtp,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  changePassword
 };

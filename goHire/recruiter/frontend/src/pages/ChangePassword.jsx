@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Lock } from 'lucide-react';
+import { authApi } from '../services/authApi';
 
 const ChangePassword = () => {
   const [error, setError] = useState('');
@@ -14,7 +15,7 @@ const ChangePassword = () => {
       .required('Current password is required'),
     newPassword: Yup.string()
       .required('New password is required')
-      .min(6, 'Password must be at least 6 characters'),
+      .min(4, 'Password must be at least 4 characters'),
     confirmPassword: Yup.string()
       .required('Please confirm your password')
       .oneOf([Yup.ref('newPassword')], 'Passwords must match'),
@@ -26,12 +27,21 @@ const ChangePassword = () => {
     setSubmitting(true);
 
     try {
-      // TODO: Implement change password API call
-      // const response = await authApi.changePassword(values);
+      const response = await authApi.changePassword(
+        values.currentPassword,
+        values.newPassword,
+        values.confirmPassword
+      );
       
-      // For now, show a message that backend needs to be implemented
-      setError('Change password functionality requires backend implementation.');
-      setSubmitting(false);
+      if (response.success) {
+        setSuccess(response.message || 'Password changed successfully!');
+        setTimeout(() => {
+          navigate('/profile');
+        }, 2000);
+      } else {
+        setError(response.error || 'Failed to change password');
+        setSubmitting(false);
+      }
     } catch (err) {
       console.error('Error changing password:', err);
       setError(err.response?.data?.error || 'Failed to change password. Please try again.');
