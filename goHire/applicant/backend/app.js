@@ -3,6 +3,8 @@ const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
 const MongoStore = require('connect-mongo');
+
+// Load environment variables FIRST
 require('dotenv').config();
 
 const { connectDB } = require('./config/db');
@@ -18,21 +20,19 @@ const uploadRoutes = require('./routes/upload.routes');
 const searchRoutes = require('./routes/search.routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000; // Hardcoded port
 
-// CORS configuration for React client
+// CORS configuration (Hardcoded frontend URLs)
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5174',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000'
-].filter(Boolean); // Remove undefined values
+];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -49,9 +49,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session configuration
+// Session configuration (Hardcoded)
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'applicant-secret-key',
+  secret: 'applicant-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -60,7 +60,7 @@ app.use(session({
     httpOnly: true
   },
   store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/applicant_db',
+    mongoUrl: 'mongodb://localhost:27017/applicant_db',
     ttl: 14 * 24 * 60 * 60
   })
 }));
@@ -94,4 +94,3 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`[Applicant] Server running on http://localhost:${PORT}`);
 });
-
