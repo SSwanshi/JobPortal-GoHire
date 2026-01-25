@@ -16,35 +16,37 @@ const CheckoutForm = ({ amount, plan, onSuccess }) => {
       base: {
         fontSize: '16px',
         color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
+        '::placeholder': { color: '#aab7c4' },
       },
-      invalid: {
-        color: '#9e2146',
-      },
+      invalid: { color: '#9e2146' },
     },
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
+    if (!stripe || !elements) return;
 
     setProcessing(true);
 
     try {
-      // Create payment intent
-      const { clientSecret, paymentIntentId } = await paymentService.createPaymentIntent(amount, plan);
+      // 1. Create Payment Intent (Backend)
+      const { clientSecret, paymentIntentId } =
+        await paymentService.createPaymentIntent(amount, plan);
 
-      // Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-        },
-      });
+      // 2. Confirm Card Payment (Stripe handles 2FA here automatically)
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: "Premium User",
+            },
+          },
+          // Required for 3D Secure redirection
+          return_url: `${window.location.origin}/payment-success`,
+        }
+      );
 
       if (error) {
         showToast(error.message, 'error');
@@ -52,14 +54,18 @@ const CheckoutForm = ({ amount, plan, onSuccess }) => {
         return;
       }
 
+      // 3. After OTP / Bank Approval
       if (paymentIntent.status === 'succeeded') {
-        // Process payment on backend
-        const result = await paymentService.processPayment(paymentIntentId, plan, amount);
-        
+        const result = await paymentService.processPayment(
+          paymentIntentId,
+          plan,
+          amount
+        );
+
         if (result.success) {
           showToast('Payment successful! You are now a premium member!', 'success');
           if (onSuccess) onSuccess(result);
-          setTimeout(() => navigate('/profile'), 2000);
+          setTimeout(() => navigate('/receipt'), 2000);
         }
       }
     } catch (error) {
@@ -90,33 +96,11 @@ const CheckoutForm = ({ amount, plan, onSuccess }) => {
             : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
-        {processing ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Processing...
-          </span>
-        ) : (
-          `Pay ₹${amount}`
-        )}
+        {processing ? 'Processing...' : `Pay ₹${amount}`}
       </button>
 
       <p className="text-xs text-gray-500 text-center">
-        Your payment is secured by Stripe. We don't store your card details.
+        🔐 Secure payment with Stripe. OTP / Bank verification will appear if required.
       </p>
     </form>
   );
