@@ -89,7 +89,7 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, []); // Remove showToast dependency to prevent unnecessary re-renders
 
   useEffect(() => {
     fetchProfileData();
@@ -100,7 +100,7 @@ const Profile = () => {
         URL.revokeObjectURL(profileImageUrl);
       }
     };
-  }, [fetchProfileData]);
+  }, []); // Only run once on mount
 
   const handleProfileImageUpload = async (e) => {
     e.preventDefault();
