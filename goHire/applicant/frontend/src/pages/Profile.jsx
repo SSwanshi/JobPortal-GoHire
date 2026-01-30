@@ -166,6 +166,20 @@ const Profile = () => {
     }
   };
 
+  const handleViewResume = async () => {
+    try {
+      const resumeBlob = await profileService.getResume();
+      const resumeUrl = URL.createObjectURL(resumeBlob);
+      window.open(resumeUrl, '_blank');
+      
+      // Clean up the object URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(resumeUrl), 1000);
+    } catch (error) {
+      console.error('Error viewing resume:', error);
+      showToast('Failed to load resume', 'error');
+    }
+  };
+
   const handleResumeUpload = async (e) => {
     e.preventDefault();
     const fileInput = document.getElementById('resumeFile');
@@ -476,14 +490,12 @@ const Profile = () => {
                         <p className="text-gray-900 font-semibold">{resumeName}</p>
                       </div>
                       <div className="flex space-x-3">
-                        <a
-                          href={profileService.getResumeUrl()}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={handleViewResume}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center"
                         >
                           <i className="fas fa-eye mr-2"></i> View
-                        </a>
+                        </button>
                         <button
                           onClick={handleDeleteResume}
                           className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition flex items-center"
