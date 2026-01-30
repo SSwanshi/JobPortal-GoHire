@@ -115,7 +115,16 @@ const getProfile = async (req, res) => {
         phone: user.phone,
         gender: user.gender,
         profileImageId: user.profileImageId,
-        isPremium: isPremium
+        isPremium: isPremium,
+        // Additional fields
+        collegeName: user.collegeName || '',
+        skills: user.skills || '',
+        about: user.about || '',
+        linkedinProfile: user.linkedinProfile || '',
+        githubProfile: user.githubProfile || '',
+        portfolioWebsite: user.portfolioWebsite || '',
+        workExperience: user.workExperience || '',
+        achievements: user.achievements || ''
       },
       resumeName,
       applicationHistory
@@ -169,10 +178,9 @@ const updateProfile = async (req, res) => {
   if (workExperience !== undefined) updateData.workExperience = workExperience;
   if (achievements !== undefined) updateData.achievements = achievements;
 
-
     const updatedUser = await User.findOneAndUpdate(
       { userId },
-      { firstName, lastName, email, phone, gender },
+      updateData,
       { new: true }
     );
 
