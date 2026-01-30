@@ -468,7 +468,7 @@ const Profile = () => {
                     <ProfileInfoCard icon="fa-envelope" label="Email Address" value={userData.email} />
                     <ProfileInfoCard icon="fa-phone" label="Phone Number" value={userData.phone} />
                     <ProfileInfoCard icon="fa-venus-mars" label="Gender" value={userData.gender} />
-                    <ProfileInfoCard icon="fa-calendar-alt" label="Member Since" value="25 March 2025" />
+                    <ProfileInfoCard icon="fa-calendar-alt" label="Member Since" value={userData.memberSince ? new Date(userData.memberSince).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'} />
                   </div>
                 </div>
               </div>

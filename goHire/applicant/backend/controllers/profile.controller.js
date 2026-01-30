@@ -116,6 +116,7 @@ const getProfile = async (req, res) => {
         gender: user.gender,
         profileImageId: user.profileImageId,
         isPremium: isPremium,
+        memberSince: user.memberSince,
         // Additional fields
         collegeName: user.collegeName || '',
         skills: user.skills || '',
