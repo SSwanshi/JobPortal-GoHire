@@ -375,9 +375,6 @@ const Profile = () => {
                     >
                       {userData.firstName?.charAt(0).toUpperCase()}
                     </div>
-                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md">
-                      <div className="bg-green-500 rounded-full w-4 h-4 border-2 border-white"></div>
-                    </div>
                   </div>
 
                   <h2 className="text-xl font-bold text-gray-900">
@@ -418,7 +415,7 @@ const Profile = () => {
                           onClick={handleDeleteProfileImage}
                           className="px-3 py-2 bg-red-100 text-red-700 text-sm rounded-lg hover:bg-red-200 transition flex items-center justify-center"
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i> Del
                         </button>
                       )}
                     </div>
@@ -667,7 +664,7 @@ const Profile = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg text-gray-900 font-semibold">
+                      <p className="text-lg text-gray-900">
                         {additionalInfo.collegeName || 'Not specified'}
                       </p>
                     )}
@@ -716,7 +713,7 @@ const Profile = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg text-gray-900 font-semibold">
+                      <p className="text-lg text-gray-900">
                         {additionalInfo.skills || 'Not specified'}
                       </p>
                     )}
