@@ -4,7 +4,7 @@ const Company = require('../models/Companies');
 
 const getInternships = async (req, res) => {
   try {
-    const internships = await Internship.find({ createdBy: req.session.userId }).populate("intCompany");
+    const internships = await Internship.find({ createdBy: req.userId }).populate("intCompany");
     res.json({ success: true, internships });
   } catch (error) {
     console.error('Error fetching internships:', error);
@@ -34,7 +34,7 @@ const addInternship = async (req, res) => {
 
     const companyExists = await Company.findOne({
       _id: intCompany,
-      createdBy: req.session.userId,
+      createdBy: req.userId,
       verified: true
     });
 
@@ -52,7 +52,7 @@ const addInternship = async (req, res) => {
       intExperience: parseInt(intExperience),
       intPositions: parseInt(intPositions),
       intCompany: companyExists._id,
-      createdBy: req.session.userId,
+      createdBy: req.userId,
       intExpiry: new Date(intExpiry)
     });
 
@@ -67,7 +67,7 @@ const addInternship = async (req, res) => {
 const getEditInternship = async (req, res) => {
   try {
     const internship = await Internship.findById(req.params.id).populate("intCompany");
-    const companies = await Company.find({ createdBy: req.session.userId });
+    const companies = await Company.find({ createdBy: req.userId });
 
     if (!internship) {
       return res.status(404).json({ success: false, message: 'Internship not found' });

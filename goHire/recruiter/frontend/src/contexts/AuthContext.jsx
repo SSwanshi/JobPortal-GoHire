@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { authApi } from '../services/authApi';
+import { getStoredToken, setStoredToken } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -12,13 +13,22 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
+    if (!getStoredToken()) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const response = await authApi.checkSession();
       if (response.success && response.user) {
         setUser(response.user);
+      } else {
+        setStoredToken(null);
+        setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
+      setStoredToken(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -27,7 +37,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authApi.login(email, password);
-    if (response.success && response.user) {
+    if (response.success && response.user && response.token) {
+      setStoredToken(response.token);
       setUser(response.user);
     }
     return response;
@@ -40,9 +51,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authApi.logout();
-      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setStoredToken(null);
       setUser(null);
     }
   };

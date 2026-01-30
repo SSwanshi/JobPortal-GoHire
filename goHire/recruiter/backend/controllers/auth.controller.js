@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOtpEmail } = require('../utils/emailService');
 
@@ -22,22 +23,16 @@ const login = async (req, res) => {
       });
     }
 
-    req.session.user = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      gender: user.gender,
-      profileImage: user.profileImage
-    };
-    req.session.userId = user._id;
-
-    await req.session.save();
+    const token = jwt.sign(
+      { _id: user._id, email: user.email },
+      process.env.JWT_SECRET || 'recruiter-jwt-secret',
+      { expiresIn: '7d' }
+    );
 
     res.json({
       success: true,
       message: 'Login successful',
+      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -131,32 +126,24 @@ const signup = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        error: 'Error logging out'
-      });
-    }
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
   });
 };
 
 const checkSession = async (req, res) => {
-  if (req.session.user) {
+  if (req.user) {
     res.json({
       success: true,
       user: {
-        id: req.session.user._id,
-        firstName: req.session.user.firstName,
-        lastName: req.session.user.lastName,
-        email: req.session.user.email,
-        phone: req.session.user.phone,
-        gender: req.session.user.gender,
-        profileImage: req.session.user.profileImage
+        id: req.user._id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        phone: req.user.phone,
+        gender: req.user.gender,
+        profileImage: req.user.profileImage
       }
     });
   } else {
@@ -169,14 +156,7 @@ const checkSession = async (req, res) => {
 
 const getProfile = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -208,15 +188,8 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     const { firstName, lastName, phone, gender } = req.body;
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({
@@ -231,14 +204,6 @@ const updateProfile = async (req, res) => {
     if (gender) user.gender = gender;
 
     await user.save();
-
-    req.session.user = {
-      ...req.session.user,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      gender: user.gender
-    };
 
     res.json({
       success: true,
@@ -265,13 +230,6 @@ const updateProfile = async (req, res) => {
 
 const uploadProfileImage = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -279,7 +237,7 @@ const uploadProfileImage = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -293,9 +251,6 @@ const uploadProfileImage = async (req, res) => {
     };
 
     await user.save();
-
-    req.session.user.profileImage = user.profileImage;
-    await req.session.save();
 
     res.json({
       success: true,
@@ -534,13 +489,6 @@ const resetPassword = async (req, res) => {
 // Change password (for authenticated users)
 const changePassword = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     // Validate all fields are provided
@@ -568,7 +516,7 @@ const changePassword = async (req, res) => {
     }
 
     // Get user from database
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
