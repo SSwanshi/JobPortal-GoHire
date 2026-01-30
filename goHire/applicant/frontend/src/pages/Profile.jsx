@@ -9,6 +9,7 @@ const Profile = () => {
   const [applicationHistory, setApplicationHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageTimestamp, setImageTimestamp] = useState(Date.now());
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const { showToast } = useToast();
   
   // Additional profile fields
@@ -64,6 +65,20 @@ const Profile = () => {
       };
       setAdditionalInfo(addInfo);
       setTempValues(addInfo);
+      
+      // Fetch profile image if it exists
+      if (data.user?.profileImageId) {
+        try {
+          const imageBlob = await profileService.getProfileImage();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          setProfileImageUrl(imageUrl);
+        } catch (error) {
+          console.error('Error fetching profile image:', error);
+          setProfileImageUrl(null);
+        }
+      } else {
+        setProfileImageUrl(null);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       if (error.response?.status === 401) {
@@ -78,6 +93,13 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfileData();
+    
+    // Cleanup function to revoke object URLs
+    return () => {
+      if (profileImageUrl) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+    };
   }, [fetchProfileData]);
 
   const handleProfileImageUpload = async (e) => {
@@ -130,8 +152,14 @@ const Profile = () => {
       await profileService.deleteProfileImage();
       showToast('Profile image deleted successfully!', 'success');
       
+      // Revoke old URL
+      if (profileImageUrl) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+      
       // Update state
       setUserData((prev) => ({ ...prev, profileImageId: null }));
+      setProfileImageUrl(null);
       setImageTimestamp(Date.now());
     } catch {
       showToast('Failed to delete image', 'error');
@@ -311,10 +339,10 @@ const Profile = () => {
                         </div>
                       </div>
                     )}
-                    {userData.profileImageId ? (
+                    {profileImageUrl ? (
                       <img
                         key={imageTimestamp}
-                        src={profileService.getProfileImageUrl(imageTimestamp)}
+                        src={profileImageUrl}
                         className="w-32 h-32 rounded-full border-4 border-blue-200 shadow-lg object-cover"
                         alt="Profile"
                         onError={(e) => {
@@ -329,7 +357,7 @@ const Profile = () => {
                       />
                     ) : null}
                     <div 
-                      className={`w-32 h-32 flex items-center justify-center rounded-full border-4 border-blue-200 shadow-lg bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 text-4xl font-bold ${userData.profileImageId ? 'hidden' : ''}`}
+                      className={`w-32 h-32 flex items-center justify-center rounded-full border-4 border-blue-200 shadow-lg bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 text-4xl font-bold ${profileImageUrl ? 'hidden' : ''}`}
                     >
                       {userData.firstName?.charAt(0).toUpperCase()}
                     </div>

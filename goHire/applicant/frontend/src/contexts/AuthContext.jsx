@@ -8,6 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is already logged in (token exists)
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+      }
+    }
+    
     checkAuth();
   }, []);
 
@@ -54,6 +66,9 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      // Clear user even if logout API fails
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setUser(null);
     }
   };

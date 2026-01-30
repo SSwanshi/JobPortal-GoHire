@@ -7,11 +7,11 @@ const uploadResume = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    if (!req.session.user?.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -50,11 +50,11 @@ const uploadProfileImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    if (!req.session.user?.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }

@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
+const { requireAuth } = require('../middleware/auth');
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
-router.get('/me', authController.getCurrentUser);
+router.get('/me', requireAuth, authController.getCurrentUser);
 
 // Forgot password routes
 router.post('/forgot-password', authController.sendForgotPasswordOtp);

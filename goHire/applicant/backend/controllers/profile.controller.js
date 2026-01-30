@@ -12,11 +12,11 @@ const bcrypt = require('bcrypt');
 
 const getProfile = async (req, res) => {
   try {
-    if (!req.session.user?.authenticated) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -32,8 +32,8 @@ const getProfile = async (req, res) => {
       if (files.length > 0) resumeName = files[0].filename;
     }
 
-    const jobApplications = await Applied_for_Jobs.find({ userId: req.session.user.id });
-    const internshipApplications = await Applied_for_Internships.find({ userId: req.session.user.id });
+    const jobApplications = await Applied_for_Jobs.find({ userId: req.user.id });
+    const internshipApplications = await Applied_for_Internships.find({ userId: req.user.id });
 
     const jobIds = [...new Set(jobApplications.map(app => app.jobId).filter(Boolean))];
     const internshipIds = [...new Set(internshipApplications.map(app => app.internshipId).filter(Boolean))];
@@ -129,20 +129,26 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    
-    
-const {firstName, lastName, email, phone, gender, currentPassword, newPassword, confirmNewPassword,
-    // Additional fields
-    collegeName,
-    skills,
-    about,
-    linkedinProfile,
-    githubProfile,
-    portfolioWebsite,
-    workExperience,
-    achievements
-  } = req.body;
-  const userId = req.session.user.id;
+    const {
+      firstName, 
+      lastName, 
+      email, 
+      phone, 
+      gender, 
+      currentPassword, 
+      newPassword, 
+      confirmNewPassword,
+      // Additional fields
+      collegeName,
+      skills,
+      about,
+      linkedinProfile,
+      githubProfile,
+      portfolioWebsite,
+      workExperience,
+      achievements
+    } = req.body;
+    const userId = req.user.id;
 
   // Prepare update object with all fields
   const updateData = {
@@ -163,7 +169,6 @@ const {firstName, lastName, email, phone, gender, currentPassword, newPassword, 
   if (workExperience !== undefined) updateData.workExperience = workExperience;
   if (achievements !== undefined) updateData.achievements = achievements;
 
- 
 
     const updatedUser = await User.findOneAndUpdate(
       { userId },
@@ -198,14 +203,8 @@ const {firstName, lastName, email, phone, gender, currentPassword, newPassword, 
       await User.findOneAndUpdate({ userId }, { password: hashedPassword });
     }
 
-    req.session.user = {
-      ...req.session.user,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      email: updatedUser.email,
-      phone: updatedUser.phone,
-      gender: updatedUser.gender
-    };
+    // With JWT, profile updates don't require session updates
+    // Client will continue using the same token until it expires
 
     res.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
@@ -216,15 +215,11 @@ const {firstName, lastName, email, phone, gender, currentPassword, newPassword, 
 
 const deleteProfile = async (req, res) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     await User.deleteOne({ userId });
 
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: 'An error occurred while logging out' });
-      }
-      res.json({ success: true, message: 'Account deleted successfully' });
-    });
+    // With JWT, logout is handled on the client side by removing the token
+    res.json({ success: true, message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Delete profile error:', error);
     res.status(500).json({ error: 'An unexpected error occurred' });
@@ -236,11 +231,11 @@ const uploadResume = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    if (!req.session.user?.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -276,7 +271,7 @@ const uploadResume = async (req, res) => {
 
 const getResume = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).send('Not logged in');
 
     const user = await User.findOne({ userId });
@@ -299,7 +294,7 @@ const getResume = async (req, res) => {
 
 const deleteResume = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }
@@ -327,11 +322,11 @@ const uploadProfileImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    if (!req.session.user?.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -367,7 +362,7 @@ const uploadProfileImage = async (req, res) => {
 
 const getProfileImage = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).send('Not logged in');
 
     const user = await User.findOne({ userId });
@@ -388,7 +383,7 @@ const getProfileImage = async (req, res) => {
 
 const deleteProfileImage = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Not logged in' });
     }

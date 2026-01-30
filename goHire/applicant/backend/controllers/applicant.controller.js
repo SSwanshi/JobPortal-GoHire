@@ -297,7 +297,7 @@ const getInternshipById = async (req, res) => {
 
 const applyForJob = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     const { jobId } = req.params;
 
     if (!userId) {
@@ -356,7 +356,7 @@ const applyForJob = async (req, res) => {
 
 const checkInternshipApplication = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     const { internshipId } = req.params;
 
     const recruiterConn = await connectRecruiterDB();
@@ -388,7 +388,7 @@ const checkInternshipApplication = async (req, res) => {
 
 const applyForInternship = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     const { internshipId } = req.params;
 
     if (!userId) {
@@ -450,7 +450,7 @@ const applyForInternship = async (req, res) => {
 
 const getAppliedJobs = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     const applications = await Applied_for_Jobs.find({ userId }).lean();
     res.json(applications);
   } catch (err) {
@@ -461,7 +461,7 @@ const getAppliedJobs = async (req, res) => {
 
 const getAppliedInternships = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     const applications = await Applied_for_Internships.find({ userId }).lean();
     res.json(applications);
   } catch (err) {

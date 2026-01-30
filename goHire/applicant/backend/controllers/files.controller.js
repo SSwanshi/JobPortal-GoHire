@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 
 const getResume = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).send('Not logged in');
 
     const user = await User.findOne({ userId });
@@ -27,7 +27,7 @@ const getResume = async (req, res) => {
 
 const getProfileImage = async (req, res) => {
   try {
-    const userId = req.session.user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).send('Not logged in');
 
     const user = await User.findOne({ userId });
