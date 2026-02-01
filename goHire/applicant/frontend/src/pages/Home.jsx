@@ -1,18 +1,20 @@
-import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import headerImage from '../assets/images/header_image.webp';
-import cardInternship from '../assets/images/card_internship.webp';
-import cardJob from '../assets/images/card_job.webp';
-import cardPremium from '../assets/images/card_premium.webp';
-import cardMore from '../assets/images/card_more.webp';
-import logoAmazon from '../assets/images/brand_logo_amazon.webp';
-import logoFlipkart from '../assets/images/brand_logo_flipkart.webp';
-import logoLoreal from '../assets/images/brand_logo_loreal.webp';
-import logoWalmart from '../assets/images/brand_logo_walmart.webp';
-import logoWipro from '../assets/images/brand_logo_wipro.webp';
-import logoAsianPaints from '../assets/images/brand_logo_asianpaints.webp';
-import logoHp from '../assets/images/brand_logo_hp.webp';
-import logoAditya from '../assets/images/brand_logo_aditya.webp';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import headerImage from "../assets/images/header_image.webp";
+import cardInternship from "../assets/images/card_internship.webp";
+import cardJob from "../assets/images/card_job.webp";
+import cardPremium from "../assets/images/card_premium.webp";
+import cardMore from "../assets/images/card_more.webp";
+import logoAmazon from "../assets/images/brand_logo_amazon.webp";
+import logoFlipkart from "../assets/images/brand_logo_flipkart.webp";
+import logoLoreal from "../assets/images/brand_logo_loreal.webp";
+import logoWalmart from "../assets/images/brand_logo_walmart.webp";
+import logoWipro from "../assets/images/brand_logo_wipro.webp";
+import logoAsianPaints from "../assets/images/brand_logo_asianpaints.webp";
+import logoHp from "../assets/images/brand_logo_hp.webp";
+import logoAditya from "../assets/images/brand_logo_aditya.webp";
+// import adminApi from "../../../../admin/frontend/src/services/adminApi";
+import { applicantApi } from "../services/applicantApi";
 
 const Home = () => {
   const headerTextRef = useRef(null);
@@ -23,48 +25,81 @@ const Home = () => {
   const card2Ref = useRef(null);
   const card3Ref = useRef(null);
 
+  const [stats, setStats] = useState({
+    applicants: 0,
+    companies: 0,
+    jobs: 0,
+    internships: 0,
+  });
+
+  const fetchStats = async () => {
+  try {
+    const [companies, jobs, internships] = await Promise.all([
+      applicantApi.getCompanies().catch(() => []),
+      applicantApi.getJobs().catch(() => []),
+      applicantApi.getInternships().catch(() => []),
+    ]);
+
+    setStats({
+      companies: companies.length,
+      jobs: jobs.flatMap(c => c.jobs || []).length,
+      internships: internships.flatMap(c => c.internships || []).length,
+    });
+
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+  }
+};
+  
+
   // Animate header elements on mount
   useEffect(() => {
     setTimeout(() => {
       if (headerTextRef.current) {
-        headerTextRef.current.classList.remove('translate-y-8', 'opacity-0');
+        headerTextRef.current.classList.remove("translate-y-8", "opacity-0");
       }
     }, 300);
 
     setTimeout(() => {
       if (headerImageRef.current) {
-        headerImageRef.current.classList.remove('translate-x-8', 'opacity-0');
+        headerImageRef.current.classList.remove("translate-x-8", "opacity-0");
       }
     }, 600);
   }, []);
 
+  useEffect(() => {
+    fetchStats();
+  }, []);
   // Intersection Observer for scroll animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.remove('opacity-0');
-            if (entry.target.id === 'who-heading' || entry.target.id === 'who-subheading') {
-              entry.target.classList.add('opacity-100');
-            } else if (entry.target.id === 'card-1') {
+            entry.target.classList.remove("opacity-0");
+            if (
+              entry.target.id === "who-heading" ||
+              entry.target.id === "who-subheading"
+            ) {
+              entry.target.classList.add("opacity-100");
+            } else if (entry.target.id === "card-1") {
               setTimeout(() => {
-                entry.target.classList.add('opacity-100');
+                entry.target.classList.add("opacity-100");
               }, 200);
-            } else if (entry.target.id === 'card-2') {
+            } else if (entry.target.id === "card-2") {
               setTimeout(() => {
-                entry.target.classList.add('opacity-100');
+                entry.target.classList.add("opacity-100");
               }, 400);
-            } else if (entry.target.id === 'card-3') {
+            } else if (entry.target.id === "card-3") {
               setTimeout(() => {
-                entry.target.classList.add('opacity-100');
+                entry.target.classList.add("opacity-100");
               }, 600);
             }
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (whoHeadingRef.current) observer.observe(whoHeadingRef.current);
@@ -89,6 +124,8 @@ const Home = () => {
     logoAditya,
   ];
 
+  console.log(stats.companies);
+
   return (
     <div className="min-h-screen -mt-24">
       {/* Header Hero Section */}
@@ -102,11 +139,16 @@ const Home = () => {
               id="header-text"
             >
               <h1 className="text-5xl font-bold leading-tight">
-                {' '}
-                Unlock Seemless <span className="text-yellow-300">Career</span> Potential
+                {" "}
+                Unlock Seemless <span className="text-yellow-300">
+                  Career
+                </span>{" "}
+                Potential
               </h1>
               <p className="text-xl mt-6 text-blue-100 max-w-lg">
-                Discover worldwide opportunities to enhance your career, demonstrate your skills, strengthen your CV, and connect with leading employers.
+                Discover worldwide opportunities to enhance your career,
+                demonstrate your skills, strengthen your CV, and connect with
+                leading employers.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center md:justify-start">
                 <Link
@@ -133,7 +175,11 @@ const Home = () => {
           </div>
         </div>
         <div className="absolute bottom-0 left-0 w-full overflow-hidden">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            viewBox="0 0 1440 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M0 120L48 105C96 90 192 60 288 55C384 50 480 70 576 75C672 80 768 70 864 75C960 80 1056 100 1152 100C1248 100 1344 80 1392 70L1440 60V120H1392C1344 120 1248 120 1152 120C1056 120 960 120 864 120C768 120 672 120 576 120C480 120 384 120 288 120C192 120 96 120 48 120H0Z"
               fill="white"
@@ -151,7 +197,9 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
             <div className="bg-green-100 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative">
               <div className="p-6">
-                <h3 className="text-2xl font-bold text-green-800 mb-2">Internships</h3>
+                <h3 className="text-2xl font-bold text-green-800 mb-2">
+                  Internships
+                </h3>
                 <p className="text-green-700 mb-6">
                   Gain
                   <br />
@@ -201,7 +249,9 @@ const Home = () => {
 
             <div className="bg-yellow-100 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative">
               <div className="p-6">
-                <h3 className="text-2xl font-bold text-yellow-800 mb-2">Premium</h3>
+                <h3 className="text-2xl font-bold text-yellow-800 mb-2">
+                  Premium
+                </h3>
                 <p className="text-yellow-700 mb-6">
                   Battle
                   <br />
@@ -225,7 +275,9 @@ const Home = () => {
 
             <div className="bg-pink-100 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative">
               <div className="p-6">
-                <h3 className="text-2xl font-bold text-pink-800 mb-2">Explore</h3>
+                <h3 className="text-2xl font-bold text-pink-800 mb-2">
+                  Explore
+                </h3>
                 <p className="text-pink-700 mb-6">
                   Compete with
                   <br />
@@ -257,8 +309,8 @@ const Home = () => {
             <div
               className="flex animate-scroll hover:animate-pause"
               style={{
-                width: 'calc(200px * 16)',
-                animation: 'scroll 20s linear infinite',
+                width: "calc(200px * 16)",
+                animation: "scroll 20s linear infinite",
               }}
             >
               {[...brandLogos, ...brandLogos].map((logo, index) => (
@@ -266,7 +318,11 @@ const Home = () => {
                   key={index}
                   className="flex-shrink-0 w-[200px] h-20 p-4 hover:transition-opacity duration-300 flex justify-center items-center"
                 >
-                  <img src={logo} alt="Partner Logo" className="h-20 object-contain" />
+                  <img
+                    src={logo}
+                    alt="Partner Logo"
+                    className="h-20 object-contain"
+                  />
                 </div>
               ))}
             </div>
@@ -315,7 +371,8 @@ const Home = () => {
             className="text-xl text-gray-600 max-w-2xl mx-auto mb-16 transform transition-all duration-500 opacity-0"
             id="who-subheading"
           >
-            Join set of users who have revolutionized their hiring and job-seeking experience
+            Join set of users who have revolutionized their hiring and
+            job-seeking experience
           </p>
           <div className="grid md:grid-cols-3 gap-10 mt-8 px-4 md:px-16">
             <div
@@ -339,10 +396,13 @@ const Home = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-blue-700 mb-4">Students</h3>
+              <h3 className="text-2xl font-semibold text-blue-700 mb-4">
+                Students
+              </h3>
               <p className="text-gray-600 mb-6">
-                Explore opportunities, apply for jobs, network, gain insights, access
-                internships, enhance skills, receive career guidance, and connect with recruiters.
+                Explore opportunities, apply for jobs, network, gain insights,
+                access internships, enhance skills, receive career guidance, and
+                connect with recruiters.
               </p>
             </div>
 
@@ -371,8 +431,9 @@ const Home = () => {
                 Companies and Recruiters
               </h3>
               <p className="text-gray-600 mb-6">
-                Find talent, post jobs, screen candidates, streamline hiring, track applications,
-                build networks, conduct interviews, and enhance employer branding.
+                Find talent, post jobs, screen candidates, streamline hiring,
+                track applications, build networks, conduct interviews, and
+                enhance employer branding.
               </p>
             </div>
 
@@ -399,10 +460,13 @@ const Home = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-blue-700 mb-4">Professionals</h3>
+              <h3 className="text-2xl font-semibold text-blue-700 mb-4">
+                Professionals
+              </h3>
               <p className="text-gray-600 mb-6">
-                Explore new opportunities, network, upskill, track industry trends, apply for
-                promotions, connect with recruiters, and access career resources.
+                Explore new opportunities, network, upskill, track industry
+                trends, apply for promotions, connect with recruiters, and
+                access career resources.
               </p>
             </div>
           </div>
@@ -418,8 +482,8 @@ const Home = () => {
                 Ready to transform your career journey?
               </h2>
               <p className="text-blue-100 mb-8">
-                Join thousands of professionals who have already discovered new opportunities
-                through GoHire.
+                Join thousands of professionals who have already discovered new
+                opportunities through GoHire.
               </p>
               <Link
                 to="http://localhost:5174/login"
@@ -430,19 +494,19 @@ const Home = () => {
             </div>
             <div className="md:w-5/12 grid grid-cols-2 gap-4">
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">5K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">{stats.jobs}</h3>
                 <p className="text-blue-600 font-bold">Job Opportunities</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">2K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">{stats.companies}</h3>
                 <p className="text-blue-600 font-bold">Hiring Companies</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">15K+</h3>
-                <p className="text-blue-600 font-bold">Professionals Hired</p>
+                <h3 className="text-3xl font-bold mb-2 text-black">{stats.internships}</h3>
+                <p className="text-blue-600 font-bold">Internships Opportunities</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">20K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">{stats.applicants}</h3>
                 <p className="text-blue-600 font-bold">Applicants Registered</p>
               </div>
             </div>
