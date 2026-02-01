@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const { upload } = require('../middleware/multer');
 
 router.post('/login', authController.login);
+router.post('/verify-2fa', authController.verify2FA);
 router.post('/signup', authController.signup);
 router.post('/logout', authController.logout);
 router.get('/check-session', requireAuth, authController.checkSession);

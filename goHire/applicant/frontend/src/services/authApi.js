@@ -13,6 +13,18 @@ export const authApi = {
     return response.data;
   },
 
+  verify2FA: async (email, otp) => {
+    const response = await api.post('/auth/verify-2fa', { email, otp });
+    // Store token in localStorage
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
+    if (response.data.user) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  },
+
   signup: async (userData) => {
     const response = await api.post('/auth/signup', userData);
     return response.data;

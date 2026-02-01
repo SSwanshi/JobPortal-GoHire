@@ -12,7 +12,8 @@ const UserSchema = new mongoose.Schema({
     contentType: String,
   },
   otp: { type: String, default: null },
-  otpExpiry: { type: Date, default: null }
+  otpExpiry: { type: Date, default: null },
+  twoFactorEnabled: { type: Boolean, default: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model("RecruiterUser", UserSchema);

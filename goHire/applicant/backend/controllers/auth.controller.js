@@ -53,27 +53,52 @@ const login = async (req, res) => {
   try {
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Email and password are required' 
+        message: 'Email and password are required'
       });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
+    }
+
+    if (user.twoFactorEnabled) {
+      const otp = generateOtp();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      try {
+        await sendOtpEmail(user.email, otp);
+        return res.json({
+          success: true,
+          require2FA: true,
+          email: user.email,
+          message: 'OTP sent to your email for 2-factor authentication'
+        });
+      } catch (emailError) {
+        console.error('2FA OTP email error:', emailError);
+        return res.status(500).json({
+          success: false,
+          error: emailError.message || 'Failed to send 2FA OTP. Please try again later.'
+        });
+      }
     }
 
     // Generate JWT token
@@ -83,7 +108,7 @@ const login = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName
     });
-    
+
     res.status(200).json({
       message: 'Login successful!',
       success: true,
@@ -98,9 +123,9 @@ const login = async (req, res) => {
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.' 
+      message: 'Server error. Please try again.'
     });
   }
 };
@@ -185,7 +210,7 @@ const sendForgotPasswordOtp = async (req, res) => {
     // Send OTP email via EmailJS
     try {
       await sendOtpEmail(email, otp);
-      
+
       res.json({
         success: true,
         message: 'OTP has been sent to your email address'
@@ -196,7 +221,7 @@ const sendForgotPasswordOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(500).json({
         success: false,
         error: emailError.message || 'Failed to send OTP email. Please try again later.'
@@ -244,7 +269,7 @@ const verifyOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -311,7 +336,7 @@ const resetPassword = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -345,6 +370,83 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Verify 2FA OTP and login
+const verify2FA = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session. Please login again.'
+      });
+    }
+
+    // Check if OTP exists and is not expired
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP not found. Please login again.'
+      });
+    }
+
+    if (new Date() > user.otpExpiry) {
+      user.otp = null;
+      user.otpExpiry = null;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please login again.'
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid OTP'
+      });
+    }
+
+    // OTP is valid, clear it and issue token
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    const token = generateToken({
+      id: user.userId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName
+    });
+
+    res.json({
+      success: true,
+      message: '2FA verified. Login successful.',
+      token,
+      user: {
+        id: user.userId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -352,6 +454,7 @@ module.exports = {
   getCurrentUser,
   sendForgotPasswordOtp,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  verify2FA
 };
 

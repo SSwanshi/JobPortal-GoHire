@@ -44,6 +44,15 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
+  const verify2FA = async (email, otp) => {
+    const response = await authApi.verify2FA(email, otp);
+    if (response.success && response.user && response.token) {
+      setStoredToken(response.token);
+      setUser(response.user);
+    }
+    return response;
+  };
+
   const signup = (userData) => {
     return authApi.signup(userData);
   };
@@ -64,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     login,
+    verify2FA,
     signup,
     logout,
     checkAuth

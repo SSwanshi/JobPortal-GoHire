@@ -4,6 +4,7 @@ const authController = require('../controllers/auth.controller');
 
 // Login
 router.post('/login', authController.login);
+router.post('/verify-2fa', authController.verify2FA);
 
 // Logout
 router.post('/logout', authController.logout);
