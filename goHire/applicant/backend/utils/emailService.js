@@ -5,7 +5,8 @@ const isEmailConfigured = () => {
   const serviceId = process.env.EMAILJS_SERVICE_ID;
   const templateId = process.env.EMAILJS_TEMPLATE_ID;
   const privateKey = process.env.EMAILJS_PRIVATE_KEY;
-  return !!(serviceId && templateId && privateKey);
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+  return !!(serviceId && templateId && privateKey && publicKey);
 };
 
 // Initialize EmailJS configuration check

@@ -43,7 +43,7 @@ const login = async (req, res) => {
         console.error('2FA OTP email error:', emailError);
         return res.status(500).json({
           success: false,
-          error: 'Failed to send 2FA OTP. Please try again later.'
+          error: emailError.message || 'Failed to send 2FA OTP. Please try again later.'
         });
       }
     }

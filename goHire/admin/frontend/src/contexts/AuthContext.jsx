@@ -30,14 +30,29 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authApi.login(email, password);
+      if (response.success && !response.require2FA) {
+        setUser(response.user);
+      }
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed'
+      };
+    }
+  };
+
+  const verify2FA = async (email, otp) => {
+    try {
+      const response = await authApi.verify2FA(email, otp);
       if (response.success) {
         setUser(response.user);
-        return { success: true };
       }
+      return response;
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Verification failed'
       };
     }
   };
@@ -57,6 +72,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    verify2FA,
     logout,
     isAuthenticated: !!user,
   };
