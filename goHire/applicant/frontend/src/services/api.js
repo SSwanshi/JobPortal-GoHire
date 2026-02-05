@@ -35,24 +35,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 1️⃣ Network / backend-down errors
+    // Network errors
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.error('Network Error: Backend server may not be running');
-      console.error('Attempted URL:', error.config?.url);
-      console.error('Base URL:', error.config?.baseURL);
-
-      error.message =
-        'Cannot connect to server. Please ensure the backend server is running on port 3000.';
+      console.error('Network Error:', error);
+      window.location.href = '/error?code=503&message=Cannot connect to server';
     }
 
-    // 2️⃣ Unauthorized (JWT expired / invalid)
+    // Unauthorized
     if (error.response?.status === 401) {
-      // Clear auth data ONLY
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+    }
 
-      // ❌ Do NOT redirect here
-      // ✅ Let AuthContext / route guards handle it
+    // Server errors
+    if (error.response?.status >= 500) {
+      const msg = error.response.data?.error || 'Server error';
+      window.location.href = `/error?code=${error.response.status}&message=${encodeURIComponent(msg)}`;
     }
 
     return Promise.reject(error);

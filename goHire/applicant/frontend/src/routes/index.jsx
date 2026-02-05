@@ -26,6 +26,8 @@ import SearchResults from '../pages/SearchResults';
 import Terms from '../pages/Terms';
 import Privacy from '../pages/Privacy';
 import Contact from '../pages/ContactUs';
+import Error from '../pages/Error';
+import NotFound from '../pages/NotFound';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -85,8 +87,11 @@ const AppRoutes = () => {
           <Route path="applied-internships" element={<AppliedInternships />} />
           <Route path="jobs/:jobId/apply" element={<ApplyJob />} />
           <Route path="internships/:internshipId/apply" element={<ApplyInternship />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+
+        {/* Error Routes */}
+        <Route path="/error" element={<Error />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
