@@ -2,9 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const { createHandler } = require('graphql-http/lib/use/express');
+const { makeExecutableSchema } = require('@graphql-tools/schema');
 
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+
+// GraphQL
+const typeDefs = require('./graphql/typeDefs');
+const resolvers = require('./graphql/resolvers');
+const { getUserFromToken } = require('./graphql/context');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -17,6 +24,12 @@ const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Create GraphQL schema
+const schema = makeExecutableSchema({
+  typeDefs,
+  resolvers,
+});
 
 // CORS configuration for React client
 const allowedOrigins = [
@@ -49,6 +62,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to database
 connectDB();
+
+// GraphQL endpoint with authentication context
+app.all(
+  '/graphql',
+  createHandler({
+    schema,
+    context: (req) => {
+      const user = getUserFromToken(req.raw);
+      return { user };
+    },
+  })
+);
+
+console.log('🚀 GraphQL server ready at http://localhost:' + PORT + '/graphql');
 
 // Health check
 app.get('/api/health', (req, res) => {
