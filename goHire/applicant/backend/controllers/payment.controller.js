@@ -1,49 +1,61 @@
+const mongoose = require('mongoose');
+const Receipt = require('../models/Receipt');
 const User = require('../models/user');
 const PremiumUser = require('../models/premium_user');
+
+// Initialize Stripe
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Payment Controller Functions
 const createPaymentIntent = async (req, res) => {
   try {
     const { amount, plan } = req.body;
     const userId = req.user.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Please login to buy Premium.' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const user = await User.findOne({ userId });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    // Convert amount to cents for Stripe (amount is in dollars)
+    const amountInCents = Math.round(amount * 100);
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({ error: 'Stripe configuration missing' });
     }
 
-    // Create Stripe payment intent
+    // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: parseInt(amount) * 100, // Convert to cents
-      currency: 'inr',
+      amount: amountInCents,
+      currency: 'usd',
       metadata: {
-        userId: user.userId,
-        email: user.email,
-        plan: plan
-      }
+        userId,
+        plan,
+      },
+      // Enable automatic payment methods for broader payment method support
+      automatic_payment_methods: {
+        enabled: true,
+      },
     });
 
-    res.json({
+    if (!paymentIntent) {
+      return res.status(500).json({ error: 'Failed to create payment intent' });
+    }
+
+    res.status(200).json({
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id
+      paymentIntentId: paymentIntent.id,
     });
-
   } catch (error) {
-    console.error('Payment intent error:', error);
-    res.status(500).json({ error: 'Failed to create payment intent' });
+    console.error('Stripe error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 const getPaymentPage = async (req, res) => {
   try {
-    res.json({ message: 'Payment page data' });
+    res.status(200).json({ message: 'Payment page' });
   } catch (error) {
-    console.error('Payment page error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -52,29 +64,61 @@ const processPayment = async (req, res) => {
     const { paymentIntentId, plan, amount } = req.body;
     const userId = req.user.id;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Please login to Buy the Premium.' });
+    if (!paymentIntentId) {
+      return res.status(400).json({ error: 'Payment intent ID is required' });
     }
 
+    // Fetch user data from database for complete information
     const user = await User.findOne({ userId });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Verify payment with Stripe
+    // Check if user is already premium
+    const existingPremiumUser = await PremiumUser.findOne({ email: user.email });
+    if (existingPremiumUser) {
+      return res.status(400).json({ 
+        error: 'You are already a premium member. No new payment is required.',
+        isPremium: true,
+        memberSince: existingPremiumUser.memberSince
+      });
+    }
+
+    // Retrieve payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({ error: 'Payment not completed' });
+      return res.status(400).json({
+        error: 'Payment not confirmed yet',
+        status: paymentIntent.status,
+      });
     }
 
-    // Check if already premium
-    const existingPremiumUser = await PremiumUser.findOne({ email: user.email });
-    if (existingPremiumUser) {
-      return res.status(400).json({ error: 'User is already a premium member' });
-    }
+    // Convert plan name to match enum values
+    const planMap = {
+      'monthly': 'Monthly Premium Plan',
+      'annual': 'Annual Premium Plan'
+    };
+    const subscriptionPlan = planMap[plan] || plan;
 
-    // Create premium user
+    // Create receipt in database
+    const receipt = new Receipt({
+      userId,
+      email: user.email,
+      firstName: user.firstName || 'User',
+      lastName: user.lastName || '',
+      phone: user.phone || 'N/A',
+      transactionId: paymentIntentId,
+      amount,
+      subscriptionPlan: subscriptionPlan,
+      paymentStatus: 'Completed',
+    });
+
+    console.log('[DEBUG] Creating receipt with data:', receipt);
+    
+    await receipt.save();
+
+    // Create PremiumUser record to mark user as premium
     const premiumUser = new PremiumUser({
       userId: user.userId,
       firstName: user.firstName,
@@ -83,67 +127,86 @@ const processPayment = async (req, res) => {
       phone: user.phone,
       gender: user.gender,
       password: user.password,
-      resumeId: user.resumeId
+      memberSince: new Date()
     });
 
     await premiumUser.save();
 
-    // Determine subscription plan based on amount
-    let subscriptionPlan = 'Monthly Premium Plan';
-    if (plan === 'annual' || amount === '2999') {
-      subscriptionPlan = 'Annual Premium Plan';
-    }
+    console.log('[DEBUG] Receipt saved successfully:', receipt._id);
+    console.log('[DEBUG] Premium user created:', premiumUser._id);
 
-    res.json({
+    res.status(200).json({
       success: true,
-      transactionId: paymentIntent.id,
-      amount: (paymentIntent.amount / 100).toString(),
-      subscriptionPlan,
-      paymentDetails: {
-        method: 'stripe',
-        amount: (paymentIntent.amount / 100).toString(),
-        transactionId: paymentIntent.id,
-        status: paymentIntent.status
-      }
+      message: 'Payment processed successfully! You are now a premium member.',
+      receipt: receipt,
+      isPremium: true
     });
-
   } catch (error) {
     console.error('Payment processing error:', error);
-    res.status(500).json({ error: 'Payment failed. Please try again.' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 const getReceipt = async (req, res) => {
   try {
-    res.json({ message: 'Receipt data' });
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    console.log(`[DEBUG] Fetching receipt for userId: ${userId}`);
+    
+    const receipt = await Receipt.findOne({ userId }).sort({ createdAt: -1 });
+
+    console.log(`[DEBUG] Receipt found:`, receipt);
+
+    if (!receipt) {
+      return res.status(404).json({ error: 'No receipt found', userId: userId });
+    }
+
+    res.status(200).json(receipt);
   } catch (error) {
-    console.error('Receipt error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Get receipt error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 const getSubscription = async (req, res) => {
   try {
-    res.json({ message: 'Subscription page data' });
+    const userId = req.user.id;
+    const receipt = await Receipt.findOne({ userId }).sort({ createdAt: -1 });
+
+    if (!receipt) {
+      return res.status(404).json({ subscription: null });
+    }
+
+    res.status(200).json({
+      subscription: receipt.subscriptionPlan,
+      expiryDate: receipt.paymentDate,
+    });
   } catch (error) {
-    console.error('Subscription error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 const getTerms = async (req, res) => {
   try {
-    res.json({ message: 'Terms of Service' });
+    res.status(200).json({
+      terms: 'Terms and conditions for premium membership',
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message });
   }
 };
 
 const getPrivacy = async (req, res) => {
   try {
-    res.json({ message: 'Privacy Policy' });
+    res.status(200).json({
+      privacy: 'Privacy policy for GoHire platform',
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -156,4 +219,3 @@ module.exports = {
   getTerms,
   getPrivacy
 };
-

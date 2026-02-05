@@ -117,7 +117,8 @@ const login = async (req, res) => {
         id: user.userId,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        phone: user.phone
       }
     });
 

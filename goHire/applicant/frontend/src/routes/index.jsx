@@ -74,14 +74,14 @@ const AppRoutes = () => {
           <Route path="terms" element={<Terms />} />
           <Route path="privacy" element={<Privacy />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="payment" element={<Payment />} />
+          <Route path="receipt" element={<Receipt />} />
         </Route>
 
         {/* Protected Routes */}
         <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
           <Route path="profile" element={<Profile />} />
           <Route path="profile/edit" element={<EditProfile />} />
-          <Route path="payment" element={<Payment />} />
-          <Route path="receipt" element={<Receipt />} />
           <Route path="subscription" element={<Subscription />} />
           <Route path="applied-jobs" element={<AppliedJobs />} />
           <Route path="applied-internships" element={<AppliedInternships />} />
