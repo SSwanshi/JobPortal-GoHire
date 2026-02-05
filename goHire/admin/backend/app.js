@@ -19,6 +19,7 @@ const companiesRoutes = require("./routes/companies.routes");
 const jobsRoutes = require("./routes/jobs.routes");
 const internshipsRoutes = require("./routes/internships.routes");
 const adminRoutes = require("./routes/admin.routes");
+const adminController = require("./controllers/admin.controller");
 const premiumService = require('./services/soap.service');
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -46,7 +47,7 @@ app.use(cors({
   allowedHeaders: [
     'Content-Type',
     'Authorization',
-    'SOAPAction'  
+    'SOAPAction'
   ],
   exposedHeaders: ['Content-Type']
 }));
@@ -63,7 +64,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "admin-secret-key",
     resave: false,
     saveUninitialized: false,
-    cookie: { 
+    cookie: {
       secure: false,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -91,6 +92,7 @@ app.use("/api/companies", companiesRoutes);
 app.use("/api/jobs", jobsRoutes);
 app.use("/api/internships", internshipsRoutes);
 app.use("/api/admin", adminRoutes);
+app.get("/api/stats", adminController.getStats);
 
 // Error handler middleware
 const errorHandler = require("./middleware/errorHandler");

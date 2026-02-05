@@ -10,12 +10,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const createPaymentIntent = async (req, res) => {
   try {
     const { amount, plan } = req.body;
-    const userId = req.user?.id;
-
-    // Validate required fields
-    if (!amount || !plan) {
-      return res.status(400).json({ error: 'Amount and plan are required' });
-    }
+    const userId = req.user.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -67,7 +62,7 @@ const getPaymentPage = async (req, res) => {
 const processPayment = async (req, res) => {
   try {
     const { paymentIntentId, plan, amount } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user.id;
 
     if (!paymentIntentId) {
       return res.status(400).json({ error: 'Payment intent ID is required' });

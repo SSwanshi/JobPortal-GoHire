@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const connectApplicantDB = require('../config/applicantDB');
+const connectRecruiterDB = require('../config/recruiterDB');
+const createJobModel = require('../models/Job');
+const createInternshipModel = require('../models/Internship');
+const createCompanyModel = require('../models/Company');
 const { initGridFS } = require('../db/gridfs');
 
 function createPremiumUserModel(connection) {
@@ -11,7 +15,7 @@ function createPremiumUserModel(connection) {
       type: String,
       unique: true,
       default: () => Math.random().toString(36).substring(2, 15) +
-          Math.random().toString(36).substring(2, 15)
+        Math.random().toString(36).substring(2, 15)
     },
     firstName: {
       type: String,
@@ -91,19 +95,19 @@ function getPremiumUsers(args, callback) {
 const getProofDocument = async (req, res) => {
   try {
     const { proofId } = req.params;
-    
+
     if (!proofId || !mongoose.Types.ObjectId.isValid(proofId)) {
       return res.status(400).json({ error: "Invalid proof document ID" });
     }
 
     const { gfs } = await initGridFS();
-    
+
     if (!gfs) {
       return res.status(500).json({ error: "GridFS is not initialized" });
     }
 
     const fileId = new mongoose.Types.ObjectId(proofId);
-    
+
     const fileData = await gfs.find({ _id: fileId }).toArray();
 
     if (!fileData || fileData.length === 0) {
@@ -111,7 +115,7 @@ const getProofDocument = async (req, res) => {
     }
 
     const file = fileData[0];
-    
+
     // Set CORS headers FIRST, before any other headers
     const origin = req.headers.origin;
     if (origin) {
@@ -122,7 +126,7 @@ const getProofDocument = async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
     res.set('Access-Control-Allow-Credentials', 'true');
-    
+
     // Set content headers
     res.set('Content-Type', file.contentType || 'application/pdf');
     res.set('Content-Disposition', `inline; filename="${file.filename || 'proof-document'}"`);
@@ -155,8 +159,48 @@ const getProofDocument = async (req, res) => {
   }
 };
 
+function createUserModel(connection) {
+  if (connection.models.User) {
+    return connection.models.User;
+  }
+  const userSchema = new mongoose.Schema({
+    email: String
+  }, { timestamps: true });
+  return connection.model("User", userSchema);
+}
+
+const getStats = async (req, res) => {
+  try {
+    const recruiterConn = await connectRecruiterDB();
+    const applicantConn = await connectApplicantDB();
+
+    const JobModel = createJobModel(recruiterConn);
+    const InternshipModel = createInternshipModel(recruiterConn);
+    const CompanyModel = createCompanyModel(recruiterConn);
+    const UserModel = createUserModel(applicantConn);
+
+    const [jobCount, internshipCount, companyCount, applicantCount] = await Promise.all([
+      JobModel.countDocuments({}),
+      InternshipModel.countDocuments({}),
+      CompanyModel.countDocuments({}),
+      UserModel.countDocuments({})
+    ]);
+
+    res.json({
+      jobCount,
+      internshipCount,
+      companyCount,
+      applicantCount
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getPremiumUsers,
-  getProofDocument
+  getProofDocument,
+  getStats
 };
 

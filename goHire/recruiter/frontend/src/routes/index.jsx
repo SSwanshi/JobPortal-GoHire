@@ -27,6 +27,7 @@ import EditProfile from '../pages/EditProfile';
 import Applications from '../pages/Applications';
 import InternshipApplications from '../pages/InternshipApplications';
 import ChangePassword from '../pages/ChangePassword';
+import NotFound from '../pages/NotFound';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -49,17 +50,17 @@ const AppRoutes = () => {
         {/* Auth Routes */}
         <Route path="/login" element={
           <PublicRoute>
-              <Login />
+            <Login />
           </PublicRoute>
         } />
         <Route path="/signup" element={
           <PublicRoute>
-              <Signup />
+            <Signup />
           </PublicRoute>
         } />
         <Route path="/forgot-password" element={
           <PublicRoute>
-              <ForgotPassword />
+            <ForgotPassword />
           </PublicRoute>
         } />
 
@@ -86,8 +87,8 @@ const AppRoutes = () => {
           <Route path="profile" element={<Profile />} />
           <Route path="profile/edit" element={<EditProfile />} />
           <Route path="profile/change-password" element={<ChangePassword />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

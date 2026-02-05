@@ -40,6 +40,19 @@ const CompaniesAwaitingVerification = () => {
     }
   };
 
+  const handleReject = async (id) => {
+    if (window.confirm('Are you sure you want to reject and remove this company?')) {
+      try {
+        await adminApi.deleteCompany(id);
+        setCompanies(companies.filter(company => company._id !== id));
+        dispatch(decrementCount());
+        alert('Company rejected and removed successfully!');
+      } catch {
+        alert('Failed to reject company');
+      }
+    }
+  };
+
   const handleViewProof = async (proofId) => {
     if (proofId) {
       try {
@@ -109,12 +122,20 @@ const CompaniesAwaitingVerification = () => {
                   )}
                 </TableCell>
                 <TableCell align="right">
-                  <button
-                    onClick={() => handleVerify(company._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium"
-                  >
-                    Verify
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleVerify(company._id)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium"
+                    >
+                      Verify
+                    </button>
+                    <button
+                      onClick={() => handleReject(company._id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
