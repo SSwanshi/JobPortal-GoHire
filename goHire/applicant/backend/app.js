@@ -16,21 +16,19 @@ const uploadRoutes = require('./routes/upload.routes');
 const searchRoutes = require('./routes/search.routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000; // Hardcoded port
 
-// CORS configuration for React client
+// CORS configuration (Hardcoded frontend URLs)
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5174',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000'
-].filter(Boolean); // Remove undefined values
+];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -74,4 +72,3 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`[Applicant] Server running on http://localhost:${PORT}`);
 });
-
