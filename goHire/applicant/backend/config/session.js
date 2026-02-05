@@ -1,3 +1,7 @@
+// This file is deprecated - JWT authentication is now used instead of sessions
+// Keeping this file for reference purposes only
+
+/*
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 require('dotenv').config();
@@ -18,4 +22,7 @@ const sessionConfig = {
 };
 
 module.exports = sessionConfig;
+*/
+
+module.exports = null;
 

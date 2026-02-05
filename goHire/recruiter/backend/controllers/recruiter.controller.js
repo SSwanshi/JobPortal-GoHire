@@ -4,16 +4,9 @@ const Internship = require('../models/Internship');
 
 const getStatistics = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
-    const companyCount = await Company.countDocuments({ createdBy: req.session.userId });
-    const jobCount = await Job.countDocuments({ createdBy: req.session.userId });
-    const internshipCount = await Internship.countDocuments({ createdBy: req.session.userId });
+    const companyCount = await Company.countDocuments({ createdBy: req.userId });
+    const jobCount = await Job.countDocuments({ createdBy: req.userId });
+    const internshipCount = await Internship.countDocuments({ createdBy: req.userId });
 
     res.json({
       success: true,

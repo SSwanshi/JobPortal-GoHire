@@ -53,30 +53,40 @@ function createPremiumUserModel(connection) {
   return connection.model("Premium_User", premiumUserSchema);
 }
 
-const getPremiumUsers = async (req, res) => {
-  try {
-    const applicantConn = await connectApplicantDB();
-    const PremiumUserModel = createPremiumUserModel(applicantConn);
-    
-    const premiumUsers = await PremiumUserModel.find({})
-      .select('email firstName lastName memberSince')
-      .sort({ email: 1 })
-      .lean();
-    
-    const formattedUsers = premiumUsers.map(user => ({
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      memberSince: user.memberSince,
-      status: 'Premium'
-    }));
+// soap-api
+function getPremiumUsers(args, callback) {
+  connectApplicantDB()
+    .then(applicantConn => {
+      const PremiumUserModel = createPremiumUserModel(applicantConn);
 
-    res.json(formattedUsers);
-  } catch (error) {
-    console.error("Error fetching premium users:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
+      return PremiumUserModel.find({})
+        .select('email firstName lastName memberSince')
+        .sort({ email: 1 })
+        .lean();
+    })
+    .then(users => {
+      const formattedUsers = users.map(user => ({
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        memberSince: user.memberSince,
+        status: 'Premium'
+      }));
+
+      callback(null, { users: formattedUsers });
+    })
+    .catch(error => {
+      console.error("SOAP ERROR:", error);
+      callback({
+        Fault: {
+          faultcode: "500",
+          faultstring: "Internal Server Error"
+        }
+      });
+    });
+}
+
+
 
 const getProofDocument = async (req, res) => {
   try {

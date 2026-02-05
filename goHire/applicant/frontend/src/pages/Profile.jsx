@@ -9,6 +9,7 @@ const Profile = () => {
   const [applicationHistory, setApplicationHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageTimestamp, setImageTimestamp] = useState(Date.now());
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const { showToast } = useToast();
   
   // Additional profile fields
@@ -64,6 +65,20 @@ const Profile = () => {
       };
       setAdditionalInfo(addInfo);
       setTempValues(addInfo);
+      
+      // Fetch profile image if it exists
+      if (data.user?.profileImageId) {
+        try {
+          const imageBlob = await profileService.getProfileImage();
+          const imageUrl = URL.createObjectURL(imageBlob);
+          setProfileImageUrl(imageUrl);
+        } catch (error) {
+          console.error('Error fetching profile image:', error);
+          setProfileImageUrl(null);
+        }
+      } else {
+        setProfileImageUrl(null);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       if (error.response?.status === 401) {
@@ -74,11 +89,18 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, []); // Remove showToast dependency to prevent unnecessary re-renders
 
   useEffect(() => {
     fetchProfileData();
-  }, [fetchProfileData]);
+    
+    // Cleanup function to revoke object URLs
+    return () => {
+      if (profileImageUrl) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+    };
+  }, []); // Only run once on mount
 
   const handleProfileImageUpload = async (e) => {
     e.preventDefault();
@@ -130,11 +152,31 @@ const Profile = () => {
       await profileService.deleteProfileImage();
       showToast('Profile image deleted successfully!', 'success');
       
+      // Revoke old URL
+      if (profileImageUrl) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+      
       // Update state
       setUserData((prev) => ({ ...prev, profileImageId: null }));
+      setProfileImageUrl(null);
       setImageTimestamp(Date.now());
     } catch {
       showToast('Failed to delete image', 'error');
+    }
+  };
+
+  const handleViewResume = async () => {
+    try {
+      const resumeBlob = await profileService.getResume();
+      const resumeUrl = URL.createObjectURL(resumeBlob);
+      window.open(resumeUrl, '_blank');
+      
+      // Clean up the object URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(resumeUrl), 1000);
+    } catch (error) {
+      console.error('Error viewing resume:', error);
+      showToast('Failed to load resume', 'error');
     }
   };
 
@@ -311,10 +353,10 @@ const Profile = () => {
                         </div>
                       </div>
                     )}
-                    {userData.profileImageId ? (
+                    {profileImageUrl ? (
                       <img
                         key={imageTimestamp}
-                        src={profileService.getProfileImageUrl(imageTimestamp)}
+                        src={profileImageUrl}
                         className="w-32 h-32 rounded-full border-4 border-blue-200 shadow-lg object-cover"
                         alt="Profile"
                         onError={(e) => {
@@ -329,12 +371,9 @@ const Profile = () => {
                       />
                     ) : null}
                     <div 
-                      className={`w-32 h-32 flex items-center justify-center rounded-full border-4 border-blue-200 shadow-lg bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 text-4xl font-bold ${userData.profileImageId ? 'hidden' : ''}`}
+                      className={`w-32 h-32 flex items-center justify-center rounded-full border-4 border-blue-200 shadow-lg bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 text-4xl font-bold ${profileImageUrl ? 'hidden' : ''}`}
                     >
                       {userData.firstName?.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md">
-                      <div className="bg-green-500 rounded-full w-4 h-4 border-2 border-white"></div>
                     </div>
                   </div>
 
@@ -376,7 +415,7 @@ const Profile = () => {
                           onClick={handleDeleteProfileImage}
                           className="px-3 py-2 bg-red-100 text-red-700 text-sm rounded-lg hover:bg-red-200 transition flex items-center justify-center"
                         >
-                          <i className="fas fa-trash mr-1"></i>
+                          <i className="fas fa-trash mr-1"></i> Del
                         </button>
                       )}
                     </div>
@@ -426,7 +465,7 @@ const Profile = () => {
                     <ProfileInfoCard icon="fa-envelope" label="Email Address" value={userData.email} />
                     <ProfileInfoCard icon="fa-phone" label="Phone Number" value={userData.phone} />
                     <ProfileInfoCard icon="fa-venus-mars" label="Gender" value={userData.gender} />
-                    <ProfileInfoCard icon="fa-calendar-alt" label="Member Since" value="25 March 2025" />
+                    <ProfileInfoCard icon="fa-calendar-alt" label="Member Since" value={userData.memberSince ? new Date(userData.memberSince).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'} />
                   </div>
                 </div>
               </div>
@@ -448,14 +487,12 @@ const Profile = () => {
                         <p className="text-gray-900 font-semibold">{resumeName}</p>
                       </div>
                       <div className="flex space-x-3">
-                        <a
-                          href={profileService.getResumeUrl()}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={handleViewResume}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center"
                         >
                           <i className="fas fa-eye mr-2"></i> View
-                        </a>
+                        </button>
                         <button
                           onClick={handleDeleteResume}
                           className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition flex items-center"
@@ -627,7 +664,7 @@ const Profile = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg text-gray-900 font-semibold">
+                      <p className="text-lg text-gray-900">
                         {additionalInfo.collegeName || 'Not specified'}
                       </p>
                     )}
@@ -676,7 +713,7 @@ const Profile = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-lg text-gray-900 font-semibold">
+                      <p className="text-lg text-gray-900">
                         {additionalInfo.skills || 'Not specified'}
                       </p>
                     )}

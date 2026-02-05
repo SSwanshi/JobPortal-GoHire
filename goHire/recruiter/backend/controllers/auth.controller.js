@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendOtpEmail } = require('../utils/emailService');
 
@@ -22,22 +23,41 @@ const login = async (req, res) => {
       });
     }
 
-    req.session.user = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      gender: user.gender,
-      profileImage: user.profileImage
-    };
-    req.session.userId = user._id;
+    if (user.twoFactorEnabled) {
+      const otp = generateOtp();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await req.session.save();
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      try {
+        await sendOtpEmail(user.email, otp);
+        return res.json({
+          success: true,
+          require2FA: true,
+          email: user.email,
+          message: 'OTP sent to your email for 2-factor authentication'
+        });
+      } catch (emailError) {
+        console.error('2FA OTP email error:', emailError);
+        return res.status(500).json({
+          success: false,
+          error: emailError.message || 'Failed to send 2FA OTP. Please try again later.'
+        });
+      }
+    }
+
+    const token = jwt.sign(
+      { _id: user._id, email: user.email },
+      process.env.JWT_SECRET || 'recruiter-jwt-secret',
+      { expiresIn: '7d' }
+    );
 
     res.json({
       success: true,
       message: 'Login successful',
+      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -131,32 +151,24 @@ const signup = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        error: 'Error logging out'
-      });
-    }
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
   });
 };
 
 const checkSession = async (req, res) => {
-  if (req.session.user) {
+  if (req.user) {
     res.json({
       success: true,
       user: {
-        id: req.session.user._id,
-        firstName: req.session.user.firstName,
-        lastName: req.session.user.lastName,
-        email: req.session.user.email,
-        phone: req.session.user.phone,
-        gender: req.session.user.gender,
-        profileImage: req.session.user.profileImage
+        id: req.user._id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        phone: req.user.phone,
+        gender: req.user.gender,
+        profileImage: req.user.profileImage
       }
     });
   } else {
@@ -169,14 +181,7 @@ const checkSession = async (req, res) => {
 
 const getProfile = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -208,15 +213,8 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     const { firstName, lastName, phone, gender } = req.body;
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({
@@ -231,14 +229,6 @@ const updateProfile = async (req, res) => {
     if (gender) user.gender = gender;
 
     await user.save();
-
-    req.session.user = {
-      ...req.session.user,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      gender: user.gender
-    };
 
     res.json({
       success: true,
@@ -265,13 +255,6 @@ const updateProfile = async (req, res) => {
 
 const uploadProfileImage = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -279,7 +262,7 @@ const uploadProfileImage = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -293,9 +276,6 @@ const uploadProfileImage = async (req, res) => {
     };
 
     await user.save();
-
-    req.session.user.profileImage = user.profileImage;
-    await req.session.save();
 
     res.json({
       success: true,
@@ -371,7 +351,7 @@ const sendForgotPasswordOtp = async (req, res) => {
     // Send OTP email via EmailJS
     try {
       await sendOtpEmail(email, otp);
-      
+
       res.json({
         success: true,
         message: 'OTP has been sent to your email address'
@@ -382,7 +362,7 @@ const sendForgotPasswordOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(500).json({
         success: false,
         error: emailError.message || 'Failed to send OTP email. Please try again later.'
@@ -430,7 +410,7 @@ const verifyOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -497,7 +477,7 @@ const resetPassword = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -534,13 +514,6 @@ const resetPassword = async (req, res) => {
 // Change password (for authenticated users)
 const changePassword = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated'
-      });
-    }
-
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     // Validate all fields are provided
@@ -568,7 +541,7 @@ const changePassword = async (req, res) => {
     }
 
     // Get user from database
-    const user = await User.findById(req.session.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -612,6 +585,85 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Verify 2FA OTP and login
+const verify2FA = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session. Please login again.'
+      });
+    }
+
+    // Check if OTP exists and is not expired
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP not found. Please login again.'
+      });
+    }
+
+    if (new Date() > user.otpExpiry) {
+      user.otp = null;
+      user.otpExpiry = null;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please login again.'
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid OTP'
+      });
+    }
+
+    // OTP is valid, clear it and issue token
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    const token = jwt.sign(
+      { _id: user._id, email: user.email },
+      process.env.JWT_SECRET || 'recruiter-jwt-secret',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: '2FA verified. Login successful.',
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        gender: user.gender,
+        profileImage: user.profileImage
+      }
+    });
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   login,
   signup,
@@ -624,5 +676,6 @@ module.exports = {
   sendForgotPasswordOtp,
   verifyOtp,
   resetPassword,
-  changePassword
+  changePassword,
+  verify2FA
 };

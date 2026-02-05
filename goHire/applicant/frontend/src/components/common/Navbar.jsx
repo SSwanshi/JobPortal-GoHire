@@ -61,13 +61,13 @@ const Navbar = () => {
         <div className="relative w-1/3 group">
           <form onSubmit={handleSearch} id="search-form">
             <input
-              id="search-space"
-              type="text"
-              placeholder="Search for Opportunities"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleSearchKeyPress}
-              className="w-full p-3 rounded-full border-2 border-blue-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all duration-300 shadow-md placeholder:text-gray-700"
+                id="search-space"
+                type="text"
+                placeholder="Search for Opportunities"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                className="w-full p-3 rounded-full bg-gray-200 text-black border-2 border-black-300 focus:outline-none focus:ring-2       focus:ring-yellow-400 transition-all duration-300 shadow-md placeholder:text-gray-700"
             />
           </form>
           <div className="absolute right-3 top-3.5 text-yellow-500">

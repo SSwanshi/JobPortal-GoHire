@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getStats } from '../services/statsApi';
 import headerImage from '../assets/images/header_image.webp';
 import cardInternship from '../assets/images/card_internship.webp';
 import cardJob from '../assets/images/card_job.webp';
@@ -76,6 +77,34 @@ const Home = () => {
     return () => {
       observer.disconnect();
     };
+  }, []);
+
+  const [stats, setStats] = useState({
+    jobCount: 0,
+    internshipCount: 0,
+    companyCount: 0,
+    applicantCount: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getStats();
+        setStats({
+          jobCount: data.jobCount ?? 0,
+          internshipCount: data.internshipCount ?? 0,
+          companyCount: data.companyCount ?? 0,
+          applicantCount: data.applicantCount ?? 0,
+        });
+      } catch {
+        setStatsError(true);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
 
   const brandLogos = [
@@ -430,19 +459,27 @@ const Home = () => {
             </div>
             <div className="md:w-5/12 grid grid-cols-2 gap-4">
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">5K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">
+                  {statsLoading ? '...' : statsError ? '—' : stats.jobCount}
+                </h3>
                 <p className="text-blue-600 font-bold">Job Opportunities</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">2K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">
+                  {statsLoading ? '...' : statsError ? '—' : stats.companyCount}
+                </h3>
                 <p className="text-blue-600 font-bold">Hiring Companies</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">15K+</h3>
-                <p className="text-blue-600 font-bold">Professionals Hired</p>
+                <h3 className="text-3xl font-bold mb-2 text-black">
+                  {statsLoading ? '...' : statsError ? '—' : stats.internshipCount}
+                </h3>
+                <p className="text-blue-600 font-bold">Internship Opportunities</p>
               </div>
               <div className="bg-white p-6 rounded-lg transform transition-all hover:scale-105 duration-300">
-                <h3 className="text-3xl font-bold mb-2 text-black">20K+</h3>
+                <h3 className="text-3xl font-bold mb-2 text-black">
+                  {statsLoading ? '...' : statsError ? '—' : stats.applicantCount}
+                </h3>
                 <p className="text-blue-600 font-bold">Applicants Registered</p>
               </div>
             </div>

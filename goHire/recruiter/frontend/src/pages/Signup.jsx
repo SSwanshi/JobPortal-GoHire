@@ -17,6 +17,8 @@ const Signup = () => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
   const { signup } = useAuth();
@@ -426,26 +428,43 @@ const Signup = () => {
               >
                 Password <span className="text-yellow-500">*</span>
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Password"
-                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.password && fieldErrors.password
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-blue-300 focus:ring-blue-500"
-                  }`}
-              />
-              {touchedFields.password && fieldErrors.password && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
-              )}
-              <p className="mt-1 text-xs text-blue-600">
-                Password must be at least 8 characters long with at least 2 special characters
-              </p>
+
+             <div className="relative">
+  <input
+    id="password"
+    name="password"
+    type={showPassword ? "text" : "password"}
+    required
+    value={formData.password}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    placeholder="Password"
+    className={`mt-1 w-full rounded-md border p-2 pr-10 focus:outline-none focus:ring-2 ${
+      touchedFields.password && fieldErrors.password
+        ? "border-red-500 focus:ring-red-500"
+        : "border-blue-300 focus:ring-blue-500"
+    }`}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800"
+    aria-label={showPassword ? "Hide password" : "Show password"}
+  >
+    👁️
+  </button>
+</div>
+
+{touchedFields.password && fieldErrors.password && (
+  <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
+)}
+
+<p className="mt-1 text-xs text-blue-600">
+  Password must be at least 8 characters long with at least 2 special characters
+</p>
+
+
             </div>
             <div>
               <label
@@ -454,23 +473,41 @@ const Signup = () => {
               >
                 Confirm Password <span className="text-yellow-500">*</span>
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Confirm Password"
-                className={`mt-1 w-full rounded-md border p-2 focus:outline-none focus:ring-2 ${touchedFields.confirmPassword && fieldErrors.confirmPassword
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-blue-300 focus:ring-blue-500"
-                  }`}
-              />
-              {touchedFields.confirmPassword && fieldErrors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.confirmPassword}</p>
-              )}
+
+              <div className="relative">
+  <input
+    id="confirmPassword"
+    name="confirmPassword"
+    type={showConfirmPassword ? "text" : "password"}
+    required
+    value={formData.confirmPassword}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    placeholder="Confirm Password"
+    className={`mt-1 w-full rounded-md border p-2 pr-10 focus:outline-none focus:ring-2 ${
+      touchedFields.confirmPassword && fieldErrors.confirmPassword
+        ? "border-red-500 focus:ring-red-500"
+        : "border-blue-300 focus:ring-blue-500"
+    }`}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800"
+    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+  >
+    👁️
+  </button>
+</div>
+
+{touchedFields.confirmPassword && fieldErrors.confirmPassword && (
+  <p className="mt-1 text-sm text-red-600">
+    {fieldErrors.confirmPassword}
+  </p>
+)}
+
+
             </div>
           </div>
 

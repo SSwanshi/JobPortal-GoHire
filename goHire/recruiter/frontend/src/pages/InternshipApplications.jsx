@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { applicationsApi } from '../services/applicationsApi';
 import { CheckCircle, XCircle, FileText, ArrowLeft } from 'lucide-react';
 import Badge from '../components/ui/Badge';
@@ -7,7 +7,7 @@ import { formatDate } from '../utils/formatDate';
 
 const InternshipApplications = () => {
   const { internshipId } = useParams();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [internshipTitle, setInternshipTitle] = useState('');
   const [internshipCompany, setInternshipCompany] = useState('');

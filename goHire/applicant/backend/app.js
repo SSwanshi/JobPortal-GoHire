@@ -1,10 +1,6 @@
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
-const MongoStore = require('connect-mongo');
-
-// Load environment variables FIRST
 require('dotenv').config();
 
 const { connectDB } = require('./config/db');
@@ -49,28 +45,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session configuration (Hardcoded)
-app.use(session({
-  secret: 'applicant-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000,
-    httpOnly: true
-  },
-  store: MongoStore.create({
-    mongoUrl: 'mongodb://localhost:27017/applicant_db',
-    ttl: 14 * 24 * 60 * 60
-  })
-}));
-
-// Store user in locals for middleware
-app.use((req, res, next) => {
-  res.locals.user = req.session.user || null;
-  next();
-});
-
 // Connect to database
 connectDB();
 
@@ -87,6 +61,10 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/search', searchRoutes);
+
+app.get('/', (req, res)=>{
+  res.send('Applicant service is running');
+})
 
 // Error handler middleware
 app.use(errorHandler);

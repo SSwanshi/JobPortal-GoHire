@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
+const { generateToken } = require('../config/jwt');
 const { sendOtpEmail } = require('../utils/emailService');
 
 const signup = async (req, res) => {
@@ -52,43 +53,66 @@ const login = async (req, res) => {
   try {
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Email and password are required' 
+        message: 'Email and password are required'
       });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Invalid email or password' 
+        message: 'Invalid email or password'
       });
     }
 
-    req.session.user = {
+    if (user.twoFactorEnabled) {
+      const otp = generateOtp();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      try {
+        await sendOtpEmail(user.email, otp);
+        return res.json({
+          success: true,
+          require2FA: true,
+          email: user.email,
+          message: 'OTP sent to your email for 2-factor authentication'
+        });
+      } catch (emailError) {
+        console.error('2FA OTP email error:', emailError);
+        return res.status(500).json({
+          success: false,
+          error: emailError.message || 'Failed to send 2FA OTP. Please try again later.'
+        });
+      }
+    }
+
+    // Generate JWT token
+    const token = generateToken({
       id: user.userId,
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      authenticated: true
-    };
+      lastName: user.lastName
+    });
 
-    await req.session.save();
-    
     res.status(200).json({
       message: 'Login successful!',
       success: true,
+      token,
       user: {
         id: user.userId,
         email: user.email,
@@ -100,30 +124,27 @@ const login = async (req, res) => {
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.' 
+      message: 'Server error. Please try again.'
     });
   }
 };
 
 const logout = async (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
-      return res.status(500).json({ message: 'Logout failed' });
-    }
-    res.json({ message: 'Logout successful', success: true });
-  });
+  // With JWT, logout is handled on the client side by removing the token
+  // Optionally, you can implement token blacklisting here if needed
+  res.json({ message: 'Logout successful', success: true });
 };
 
 const getCurrentUser = async (req, res) => {
   try {
-    if (!req.session.user?.authenticated) {
+    // User info is now attached to req by the auth middleware
+    if (!req.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    const user = await User.findOne({ userId: req.session.user.id });
+    const user = await User.findOne({ userId: req.user.id });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -190,7 +211,7 @@ const sendForgotPasswordOtp = async (req, res) => {
     // Send OTP email via EmailJS
     try {
       await sendOtpEmail(email, otp);
-      
+
       res.json({
         success: true,
         message: 'OTP has been sent to your email address'
@@ -201,7 +222,7 @@ const sendForgotPasswordOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(500).json({
         success: false,
         error: emailError.message || 'Failed to send OTP email. Please try again later.'
@@ -249,7 +270,7 @@ const verifyOtp = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -316,7 +337,7 @@ const resetPassword = async (req, res) => {
       user.otp = null;
       user.otpExpiry = null;
       await user.save();
-      
+
       return res.status(400).json({
         success: false,
         error: 'OTP has expired. Please request a new OTP.'
@@ -350,6 +371,83 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Verify 2FA OTP and login
+const verify2FA = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session. Please login again.'
+      });
+    }
+
+    // Check if OTP exists and is not expired
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP not found. Please login again.'
+      });
+    }
+
+    if (new Date() > user.otpExpiry) {
+      user.otp = null;
+      user.otpExpiry = null;
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please login again.'
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid OTP'
+      });
+    }
+
+    // OTP is valid, clear it and issue token
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    const token = generateToken({
+      id: user.userId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName
+    });
+
+    res.json({
+      success: true,
+      message: '2FA verified. Login successful.',
+      token,
+      user: {
+        id: user.userId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -357,6 +455,7 @@ module.exports = {
   getCurrentUser,
   sendForgotPasswordOtp,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  verify2FA
 };
 

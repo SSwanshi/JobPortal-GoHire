@@ -4,7 +4,7 @@ const { getBucket } = require('../config/db');
 
 const getCompanies = async (req, res) => {
   try {
-    const companies = await Company.find({ createdBy: req.session.userId });
+    const companies = await Company.find({ createdBy: req.userId });
     res.json({ success: true, companies });
   } catch (error) {
     console.error('Error fetching companies:', error);
@@ -41,7 +41,7 @@ const addCompany = async (req, res) => {
       location: location.trim(),
       logoId,
       proofDocumentId,
-      createdBy: req.session.userId,
+      createdBy: req.userId,
       verified: false
     });
 

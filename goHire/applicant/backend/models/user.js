@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'uploads.files'
   },
-  profileImageId: { 
+  profileImageId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'uploads.files'
   },
@@ -80,7 +80,8 @@ const userSchema = new mongoose.Schema({
     default: ''
   },
   otp: { type: String, default: null },
-  otpExpiry: { type: Date, default: null }
+  otpExpiry: { type: Date, default: null },
+  twoFactorEnabled: { type: Boolean, default: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

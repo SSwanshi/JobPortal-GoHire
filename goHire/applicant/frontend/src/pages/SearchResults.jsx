@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import JobCard from '../components/jobs/JobCard';
 import InternshipCard from '../components/internships/InternshipCard';
+import JobFilters from '../components/jobs/JobFilters';
+import InternshipFilters from '../components/internships/InternshipFilters';
 
 const highlightText = (text, query) => {
   if (!text || !query) return text;
@@ -21,6 +23,64 @@ const highlightText = (text, query) => {
   );
 };
 
+/** Apply same filter logic as backend: salaryMin (LPA), expMin/expMax (years), location */
+function filterJobs(jobsList, filters) {
+  if (!jobsList?.length) return [];
+  if (!filters || Object.keys(filters).every((k) => filters[k] === undefined || filters[k] === '' || (Array.isArray(filters[k]) && filters[k].length === 0))) {
+    return jobsList;
+  }
+  return jobsList.filter((job) => {
+    if (filters.salaryMin != null && Number(filters.salaryMin) > 0) {
+      const minSal = Number(filters.salaryMin);
+      if (job.jobSalary == null || job.jobSalary < minSal) return false;
+    }
+    if (filters.expMin != null && filters.expMin !== '') {
+      const expMin = Number(filters.expMin);
+      if (job.jobExperience == null || job.jobExperience < expMin) return false;
+    }
+    if (filters.expMax != null && filters.expMax !== '') {
+      const expMax = Number(filters.expMax);
+      if (job.jobExperience == null || job.jobExperience > expMax) return false;
+    }
+    if (filters.location && String(filters.location).trim()) {
+      const loc = String(filters.location).trim().toLowerCase();
+      const jobLoc = (job.jobLocation || '').toLowerCase();
+      if (!jobLoc.includes(loc)) return false;
+    }
+    return true;
+  });
+}
+
+/** Apply same filter logic as backend: stipendMin (K), durationMin/durationMax (months), location */
+function filterInternships(internshipsList, filters) {
+  if (!internshipsList?.length) return [];
+  if (!filters || Object.keys(filters).every((k) => filters[k] === undefined || filters[k] === '' || (Array.isArray(filters[k]) && filters[k].length === 0))) {
+    return internshipsList;
+  }
+  return internshipsList.filter((int) => {
+    if (filters.stipendMin != null && Number(filters.stipendMin) > 0) {
+      const minStipendRupees = Number(filters.stipendMin) * 1000;
+      if (int.intStipend == null || int.intStipend < minStipendRupees) return false;
+    }
+    if (filters.durationMin != null && filters.durationMin !== '') {
+      const durationMin = Number(filters.durationMin);
+      const durationMonths = int.intDuration != null ? int.intDuration : int.intExperience;
+      if (durationMonths == null || durationMonths < durationMin) return false;
+    }
+    if (filters.durationMax != null && filters.durationMax !== '') {
+      const durationMax = Number(filters.durationMax);
+      const durationMonths = int.intDuration != null ? int.intDuration : int.intExperience;
+      if (durationMonths == null || durationMonths > durationMax) return false;
+    }
+    if (filters.location && String(filters.location).trim()) {
+      const loc = String(filters.location).trim().toLowerCase();
+      const intLoc = (int.intLocation || '').toLowerCase();
+      if (!intLoc.includes(loc)) return false;
+    }
+    return true;
+  });
+}
+
 const SearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,11 +90,16 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('jobs');
+  const [jobFilters, setJobFilters] = useState({});
+  const [internshipFilters, setInternshipFilters] = useState({});
 
   const query = useMemo(() => {
     const params = new URLSearchParams(location.search);
     return params.get('q') || location.state?.query || '';
   }, [location.search, location.state]);
+
+  const filteredJobs = useMemo(() => filterJobs(jobs, jobFilters), [jobs, jobFilters]);
+  const filteredInternships = useMemo(() => filterInternships(internships, internshipFilters), [internships, internshipFilters]);
 
   useEffect(() => {
     if (!query) return;
@@ -132,7 +197,7 @@ const SearchResults = () => {
                   type="button"
                   onClick={() => setActiveTab('internships')}
                   className={`px-4 py-2 text-sm font-medium rounded-r-lg ${activeTab === 'internships'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-yellow-400 text-blue'
                     : 'bg-white text-blue-600 hover:bg-gray-50'
                     }`}
                 >
@@ -141,82 +206,116 @@ const SearchResults = () => {
               </div>
             </div>
 
-            {/* Jobs Section */}
+            {/* Jobs Section: same layout as Jobs page with JobFilters */}
             {activeTab === 'jobs' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                  <span className="mr-2">💼</span> Job Opportunities
-                </h2>
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="w-full lg:w-1/4">
+                  <JobFilters onFiltersChange={setJobFilters} />
+                </div>
+                <div className="w-full lg:w-3/4 space-y-6">
+                  <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <span className="mr-2">💼</span> Job Opportunities
+                    {filteredJobs.length !== totalJobs && (
+                      <span className="ml-2 text-base font-normal text-gray-500">
+                        (showing {filteredJobs.length} of {totalJobs})
+                      </span>
+                    )}
+                  </h2>
 
-                {totalJobs > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-                    {jobs.map((job) => (
-                      <div key={job._id} className="fade-in">
-                        <JobCard
-                          job={{
-                            ...job,
-                            jobTitle: highlightText(job.jobTitle, query),
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                      No jobs found matching{' '}
-                      <span className="text-blue-600">"{query}"</span>
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Try adjusting your search filters or browse our{' '}
-                      <button
-                        type="button"
-                        onClick={() => navigate('/jobs')}
-                        className="text-blue-500 hover:underline"
-                      >
-                        job listings
-                      </button>
-                      .
-                    </p>
-                  </div>
-                )}
+                  {filteredJobs.length > 0 ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+                      {filteredJobs.map((job) => (
+                        <div key={job._id} className="fade-in">
+                          <JobCard
+                            job={{
+                              ...job,
+                              jobTitle: highlightText(job.jobTitle, query),
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                        {totalJobs > 0
+                          ? 'No jobs match the current filters'
+                          : `No jobs found matching "${query}"`}
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        {totalJobs > 0 ? (
+                          <>Try adjusting the filters or clear them to see all {totalJobs} result{totalJobs !== 1 ? 's' : ''}.</>
+                        ) : (
+                          <>
+                            Try adjusting your search or browse our{' '}
+                            <button
+                              type="button"
+                              onClick={() => navigate('/jobs')}
+                              className="text-blue-500 hover:underline"
+                            >
+                              job listings
+                            </button>
+                            .
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Internships Section */}
+            {/* Internships Section: same layout as Internships page with InternshipFilters */}
             {activeTab === 'internships' && (
-              <div className="space-y-6 mt-12">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                  <span className="mr-2">🎓</span> Internship Opportunities
-                </h2>
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="w-full lg:w-1/4">
+                  <InternshipFilters onFiltersChange={setInternshipFilters} />
+                </div>
+                <div className="w-full lg:w-3/4 space-y-6">
+                  <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <span className="mr-2">🎓</span> Internship Opportunities
+                    {filteredInternships.length !== totalInternships && (
+                      <span className="ml-2 text-base font-normal text-gray-500">
+                        (showing {filteredInternships.length} of {totalInternships})
+                      </span>
+                    )}
+                  </h2>
 
-                {totalInternships > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-                    {internships.map((internship) => (
-                      <div key={internship._id} className="fade-in">
-                        <InternshipCard internship={internship} />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                      No internships found matching{' '}
-                      <span className="text-blue-600">"{query}"</span>
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Try adjusting your search filters or browse our{' '}
-                      <button
-                        type="button"
-                        onClick={() => navigate('/internships')}
-                        className="text-blue-500 hover:underline"
-                      >
-                        internship listings
-                      </button>
-                      .
-                    </p>
-                  </div>
-                )}
+                  {filteredInternships.length > 0 ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+                      {filteredInternships.map((internship) => (
+                        <div key={internship._id} className="fade-in">
+                          <InternshipCard internship={internship} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                        {totalInternships > 0
+                          ? 'No internships match the current filters'
+                          : `No internships found matching "${query}"`}
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        {totalInternships > 0 ? (
+                          <>Try adjusting the filters or clear them to see all {totalInternships} result{totalInternships !== 1 ? 's' : ''}.</>
+                        ) : (
+                          <>
+                            Try adjusting your search or browse our{' '}
+                            <button
+                              type="button"
+                              onClick={() => navigate('/internships')}
+                              className="text-blue-500 hover:underline"
+                            >
+                              internship listings
+                            </button>
+                            .
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </>

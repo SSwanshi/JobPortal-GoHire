@@ -4,7 +4,7 @@ const Company = require('../models/Companies');
 
 const getJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ createdBy: req.session.userId }).populate("jobCompany");
+    const jobs = await Job.find({ createdBy: req.userId }).populate("jobCompany");
     res.json({ success: true, jobs });
   } catch (error) {
     console.error('Error fetching jobs:', error);
@@ -34,7 +34,7 @@ const addJob = async (req, res) => {
 
     const companyExists = await Company.findOne({
       _id: jobCompany,
-      createdBy: req.session.userId,
+      createdBy: req.userId,
       verified: true
     });
 
@@ -52,7 +52,7 @@ const addJob = async (req, res) => {
       jobExperience: parseInt(jobExperience),
       noofPositions: parseInt(noofPositions),
       jobCompany: new mongoose.Types.ObjectId(jobCompany),
-      createdBy: req.session.userId,
+      createdBy: req.userId,
       jobExpiry: new Date(jobExpiry)
     });
 
@@ -67,7 +67,7 @@ const addJob = async (req, res) => {
 const getEditJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).populate("jobCompany");
-    const companies = await Company.find({ createdBy: req.session.userId });
+    const companies = await Company.find({ createdBy: req.userId });
 
     if (!job) {
       return res.status(404).json({ success: false, message: 'Job not found' });

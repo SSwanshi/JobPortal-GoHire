@@ -1,9 +1,9 @@
-import api from './api';
+import api from "./api";
 
 export const adminApi = {
   // Applicants
   getApplicants: async () => {
-    const response = await api.get('/api/applicants');
+    const response = await api.get("/api/applicants");
     return response.data;
   },
 
@@ -14,7 +14,7 @@ export const adminApi = {
 
   // Recruiters
   getRecruiters: async () => {
-    const response = await api.get('/api/recruiters');
+    const response = await api.get("/api/recruiters");
     return response.data;
   },
 
@@ -25,12 +25,12 @@ export const adminApi = {
 
   // Companies
   getCompanies: async () => {
-    const response = await api.get('/api/companies');
+    const response = await api.get("/api/companies");
     return response.data;
   },
 
   getCompaniesAwaitingVerification: async () => {
-    const response = await api.get('/api/companies/awaiting-verification');
+    const response = await api.get("/api/companies/awaiting-verification");
     return response.data;
   },
 
@@ -46,7 +46,7 @@ export const adminApi = {
 
   // Jobs
   getJobs: async () => {
-    const response = await api.get('/api/jobs');
+    const response = await api.get("/api/jobs");
     return response.data;
   },
 
@@ -57,7 +57,7 @@ export const adminApi = {
 
   // Internships
   getInternships: async () => {
-    const response = await api.get('/api/internships');
+    const response = await api.get("/api/internships");
     return response.data;
   },
 
@@ -68,22 +68,47 @@ export const adminApi = {
 
   // Premium Users
   getPremiumUsers: async () => {
-    const response = await api.get('/api/admin/premium-users');
-    return response.data;
+    const soapBody = `<?xml version="1.0" encoding="utf-8"?>
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+      <GetPremiumUsers xmlns="http://example.com/premiumusers" />
+    </soap:Body>
+  </soap:Envelope>`;
+
+    const response = await fetch("http://localhost:9000/wsdl", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/xml;charset=UTF-8",
+        SOAPAction: "GetPremiumUsers",
+      },
+      body: soapBody,
+    });
+
+    const xmlText = await response.text();
+    const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+
+    const users = [...xmlDoc.getElementsByTagName("users")].map((u) => ({
+      email: u.getElementsByTagName("email")[0]?.textContent,
+      firstName: u.getElementsByTagName("firstName")[0]?.textContent,
+      lastName: u.getElementsByTagName("lastName")[0]?.textContent,
+      memberSince: u.getElementsByTagName("memberSince")[0]?.textContent,
+      status: u.getElementsByTagName("status")[0]?.textContent,
+    }));
+
+    return users;
   },
 
   // Proof Document
   getProofDocumentUrl: (proofId) => {
-    return `${import.meta.env.VITE_API_BASE || 'http://localhost:9000'}/api/admin/company/proof/${proofId}`;
+    return `${import.meta.env.VITE_API_BASE || "http://localhost:9000"}/api/admin/company/proof/${proofId}`;
   },
 
   getProofDocument: async (proofId) => {
     const response = await api.get(`/api/admin/company/proof/${proofId}`, {
-      responseType: 'blob',
+      responseType: "blob",
     });
     return response.data;
   },
 };
 
 export default adminApi;
-
