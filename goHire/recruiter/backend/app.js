@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const notFound = require('./middleware/notFound');
 const deleteExpiredJobs = require('./routes/jobCleanup');
 const deleteExpiredInternship = require('./routes/intCleanup');
 
@@ -66,6 +67,9 @@ cron.schedule('0 0 * * *', () => {
   console.log('Running expired internships cleanup...');
   deleteExpiredInternship();
 });
+
+// 404 handler
+app.use(notFound);
 
 // Error handler middleware
 app.use(errorHandler);
