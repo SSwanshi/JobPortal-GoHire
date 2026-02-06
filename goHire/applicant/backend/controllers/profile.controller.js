@@ -23,7 +23,15 @@ const getProfile = async (req, res) => {
 
     // Check if user is premium
     const premiumUser = await PremiumUser.findOne({ email: user.email });
-    const isPremium = !!premiumUser;
+    let isPremium = !!premiumUser;
+    let premiumExpired = false;
+
+    if (premiumUser && premiumUser.planExpiry) {
+      if (new Date() > new Date(premiumUser.planExpiry)) {
+        isPremium = false;
+        premiumExpired = true;
+      }
+    }
 
     let resumeName = null;
     if (user.resumeId) {
@@ -116,6 +124,7 @@ const getProfile = async (req, res) => {
         gender: user.gender,
         profileImageId: user.profileImageId,
         isPremium: isPremium,
+        premiumExpired: premiumExpired,
         memberSince: user.memberSince,
         // Additional fields
         collegeName: user.collegeName || '',
@@ -140,13 +149,13 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const {
-      firstName, 
-      lastName, 
-      email, 
-      phone, 
-      gender, 
-      currentPassword, 
-      newPassword, 
+      firstName,
+      lastName,
+      email,
+      phone,
+      gender,
+      currentPassword,
+      newPassword,
       confirmNewPassword,
       // Additional fields
       collegeName,
@@ -160,24 +169,24 @@ const updateProfile = async (req, res) => {
     } = req.body;
     const userId = req.user.id;
 
-  // Prepare update object with all fields
-  const updateData = {
-    firstName, 
-    lastName, 
-    email, 
-    phone, 
-    gender
-  };
+    // Prepare update object with all fields
+    const updateData = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      gender
+    };
 
-  // Add additional fields if they are provided
-  if (collegeName !== undefined) updateData.collegeName = collegeName;
-  if (skills !== undefined) updateData.skills = skills;
-  if (about !== undefined) updateData.about = about;
-  if (linkedinProfile !== undefined) updateData.linkedinProfile = linkedinProfile;
-  if (githubProfile !== undefined) updateData.githubProfile = githubProfile;
-  if (portfolioWebsite !== undefined) updateData.portfolioWebsite = portfolioWebsite;
-  if (workExperience !== undefined) updateData.workExperience = workExperience;
-  if (achievements !== undefined) updateData.achievements = achievements;
+    // Add additional fields if they are provided
+    if (collegeName !== undefined) updateData.collegeName = collegeName;
+    if (skills !== undefined) updateData.skills = skills;
+    if (about !== undefined) updateData.about = about;
+    if (linkedinProfile !== undefined) updateData.linkedinProfile = linkedinProfile;
+    if (githubProfile !== undefined) updateData.githubProfile = githubProfile;
+    if (portfolioWebsite !== undefined) updateData.portfolioWebsite = portfolioWebsite;
+    if (workExperience !== undefined) updateData.workExperience = workExperience;
+    if (achievements !== undefined) updateData.achievements = achievements;
 
     const updatedUser = await User.findOneAndUpdate(
       { userId },

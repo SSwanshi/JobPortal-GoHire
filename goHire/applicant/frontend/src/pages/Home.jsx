@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { getStats } from '../services/statsApi';
 import headerImage from '../assets/images/header_image.webp';
 import cardInternship from '../assets/images/card_internship.webp';
@@ -16,6 +18,10 @@ import logoHp from '../assets/images/brand_logo_hp.webp';
 import logoAditya from '../assets/images/brand_logo_aditya.webp';
 
 const Home = () => {
+  const { user } = useContext(AuthContext);
+  const { showToast } = useToast();
+  const [toastShown, setToastShown] = useState(false);
+
   const headerTextRef = useRef(null);
   const headerImageRef = useRef(null);
   const whoHeadingRef = useRef(null);
@@ -23,6 +29,14 @@ const Home = () => {
   const card1Ref = useRef(null);
   const card2Ref = useRef(null);
   const card3Ref = useRef(null);
+
+  // Show premium expired toast
+  useEffect(() => {
+    if (user && user.premiumExpired && !toastShown) {
+      showToast('Your premium plan has expired. Please renew to continue enjoying premium features.', 'warning');
+      setToastShown(true);
+    }
+  }, [user, toastShown, showToast]);
 
   // Animate header elements on mount
   useEffect(() => {

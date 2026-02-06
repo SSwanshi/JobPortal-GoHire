@@ -41,6 +41,14 @@ const premiumUserSchema = new mongoose.Schema({
   resumeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'uploads.files'
+  },
+  plan: {
+    type: String,
+    enum: ['monthly', 'annual'],
+    default: 'monthly'
+  },
+  planExpiry: {
+    type: Date
   }
 }, { timestamps: true });
 
