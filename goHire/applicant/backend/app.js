@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const morgan = require('morgan');
 require('dotenv').config();
 
 const { connectDB } = require('./config/db');
@@ -30,7 +32,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -43,6 +45,13 @@ app.use(cors({
 }));
 
 // Middleware
+// Log to console
+app.use(morgan('dev'));
+
+// Log to file
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogStream }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -64,7 +73,7 @@ app.use('/api/files', filesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/search', searchRoutes);
 
-app.get('/', (req, res)=>{
+app.get('/', (req, res) => {
   res.send('Applicant service is running');
 })
 
