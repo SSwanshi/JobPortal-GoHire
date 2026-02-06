@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const PremiumUser = require('../models/premium_user');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../config/jwt');
 const { sendOtpEmail } = require('../utils/emailService');
@@ -148,6 +149,18 @@ const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Check premium status
+    const premiumUser = await PremiumUser.findOne({ email: user.email });
+    let isPremium = !!premiumUser;
+    let premiumExpired = false;
+
+    if (premiumUser && premiumUser.planExpiry) {
+      if (new Date() > new Date(premiumUser.planExpiry)) {
+        isPremium = false;
+        premiumExpired = true;
+      }
+    }
+
     res.json({
       user: {
         id: user.userId,
@@ -155,7 +168,9 @@ const getCurrentUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
-        gender: user.gender
+        gender: user.gender,
+        isPremium,
+        premiumExpired
       }
     });
   } catch (error) {

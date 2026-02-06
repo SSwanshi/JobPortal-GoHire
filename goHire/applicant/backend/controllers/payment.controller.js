@@ -71,7 +71,22 @@ const processPayment = async (req, res) => {
     // Check if already premium
     const existingPremiumUser = await PremiumUser.findOne({ email: user.email });
     if (existingPremiumUser) {
-      return res.status(400).json({ error: 'User is already a premium member' });
+      const isExpired = existingPremiumUser.planExpiry && new Date() > new Date(existingPremiumUser.planExpiry);
+      if (!isExpired) {
+        return res.status(400).json({ error: 'User is already an active premium member' });
+      }
+      // If expired, remove the old record to allow creation of a new one
+      await PremiumUser.deleteOne({ email: user.email });
+    }
+
+    // Calculate expiry date
+    const expiryDate = new Date();
+    let planType = 'monthly';
+    if (plan === 'annual' || amount === '2999') {
+      planType = 'annual';
+      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+    } else {
+      expiryDate.setMonth(expiryDate.getMonth() + 1);
     }
 
     // Create premium user
@@ -83,16 +98,15 @@ const processPayment = async (req, res) => {
       phone: user.phone,
       gender: user.gender,
       password: user.password,
-      resumeId: user.resumeId
+      resumeId: user.resumeId,
+      plan: planType,
+      planExpiry: expiryDate
     });
 
     await premiumUser.save();
 
-    // Determine subscription plan based on amount
-    let subscriptionPlan = 'Monthly Premium Plan';
-    if (plan === 'annual' || amount === '2999') {
-      subscriptionPlan = 'Annual Premium Plan';
-    }
+    // Determine subscription plan based on amount for response
+    let subscriptionPlan = planType === 'annual' ? 'Annual Premium Plan' : 'Monthly Premium Plan';
 
     res.json({
       success: true,
