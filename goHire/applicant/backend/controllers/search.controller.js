@@ -20,17 +20,33 @@ const search = async (req, res) => {
     }).lean();
 
     const options1 = {
+      // Include all fields that appear on the job card so that
+      // any substring match in visible content can surface the job.
       keys: [
         {
-          name: "companyName",
-          getFn: (obj) => obj.jobCompany ? obj.jobCompany.companyName : ""
+          name: 'companyName',
+          getFn: (obj) => (obj.jobCompany ? obj.jobCompany.companyName || '' : ''),
         },
-        "jobTitle",
-        "jobLocation",
-        "jobType"
+        'jobTitle',
+        'jobLocation',
+        'jobType',
+        'jobDescription',
+        'jobRequirements',
+        'jobExperience',
+        'noofPositions',
+        'jobSalary',
+        'jobExpiry',
+        // Custom "label" to allow matching on the word "LPA"
+        {
+          name: 'salaryLabel',
+          getFn: (obj) =>
+            obj.jobSalary !== undefined && obj.jobSalary !== null
+              ? `${obj.jobSalary} LPA`
+              : '',
+        },
       ],
       threshold: 0.3,
-      includeScore: true
+      includeScore: true,
     };
 
     const fuse1 = new Fuse(JobFind, options1);
@@ -47,16 +63,24 @@ const search = async (req, res) => {
     }).lean();
 
     const options2 = {
+      // Include all fields that appear on the internship card
       keys: [
         {
-          name: "companyName",
-          getFn: (obj) => obj.intCompany ? obj.intCompany.companyName : ""
+          name: 'companyName',
+          getFn: (obj) => (obj.intCompany ? obj.intCompany.companyName || '' : ''),
         },
-        "intTitle",
-        "intLocation"
+        'intTitle',
+        'intLocation',
+        'intDescription',
+        'intRequirements',
+        'intDuration',
+        'intExperience',
+        'intPositions',
+        'intStipend',
+        'intExpiry',
       ],
       threshold: 0.3,
-      includeScore: true
+      includeScore: true,
     };
 
     const fuse2 = new Fuse(InternshipFind, options2);

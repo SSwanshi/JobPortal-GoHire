@@ -5,23 +5,7 @@ import JobCard from '../components/jobs/JobCard';
 import InternshipCard from '../components/internships/InternshipCard';
 import JobFilters from '../components/jobs/JobFilters';
 import InternshipFilters from '../components/internships/InternshipFilters';
-
-const highlightText = (text, query) => {
-  if (!text || !query) return text;
-
-  const regex = new RegExp(`(${query})`, 'gi');
-  const parts = text.split(regex);
-
-  return parts.map((part, index) =>
-    regex.test(part) ? (
-      <span key={index} className="bg-yellow-200 px-0.5 rounded">
-        {part}
-      </span>
-    ) : (
-      <span key={index}>{part}</span>
-    )
-  );
-};
+import { highlightText } from '../utils/highlightText';
 
 /** Apply same filter logic as backend: salaryMin (LPA), expMin/expMax (years), location */
 function filterJobs(jobsList, filters) {
@@ -81,6 +65,65 @@ function filterInternships(internshipsList, filters) {
   });
 }
 
+// Check if a job card should be included based on the search query
+function matchesJobQuery(job, query) {
+  if (!query) return true;
+  const q = String(query).toLowerCase().trim();
+  if (!q) return true;
+
+  const fields = [
+    job.jobTitle,
+    job.jobType,
+    job.jobLocation,
+    job.jobExperience,
+    job.noofPositions,
+    job.jobSalary,
+    job.jobExpiry,
+    job.jobDescription,
+    job.jobRequirements,
+    job.jobCompany?.companyName,
+  ];
+
+  let combined = fields
+    .filter((v) => v !== undefined && v !== null)
+    .map((v) => String(v).toLowerCase())
+    .join(' ');
+
+  // Explicitly add a label containing "lpa" when salary is present
+  if (job.jobSalary !== undefined && job.jobSalary !== null) {
+    combined += ` ${String(job.jobSalary).toLowerCase()} lpa`;
+  }
+
+  return combined.includes(q);
+}
+
+// Check if an internship card should be included based on the search query
+function matchesInternshipQuery(internship, query) {
+  if (!query) return true;
+  const q = String(query).toLowerCase().trim();
+  if (!q) return true;
+
+  const fields = [
+    internship.intTitle,
+    internship.intLocation,
+    internship.intDuration,
+    internship.intExperience,
+    internship.intPositions,
+    internship.intStipend,
+    internship.intExpiry,
+    internship.intDescription,
+    internship.intRequirements,
+    internship.intCompany?.companyName,
+  ];
+
+  const combined = fields
+    .filter((v) => v !== undefined && v !== null)
+    .map((v) => String(v).toLowerCase())
+    .join(' ');
+
+  return combined.includes(q);
+}
+
 const SearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,8 +141,26 @@ const SearchResults = () => {
     return params.get('q') || location.state?.query || '';
   }, [location.search, location.state]);
 
-  const filteredJobs = useMemo(() => filterJobs(jobs, jobFilters), [jobs, jobFilters]);
-  const filteredInternships = useMemo(() => filterInternships(internships, internshipFilters), [internships, internshipFilters]);
+  const searchFilteredJobs = useMemo(
+    () => (!query ? jobs : jobs.filter((job) => matchesJobQuery(job, query))),
+    [jobs, query]
+  );
+
+  const searchFilteredInternships = useMemo(
+    () =>
+      (!query ? internships : internships.filter((int) => matchesInternshipQuery(int, query))),
+    [internships, query]
+  );
+
+  const filteredJobs = useMemo(
+    () => filterJobs(searchFilteredJobs, jobFilters),
+    [searchFilteredJobs, jobFilters]
+  );
+
+  const filteredInternships = useMemo(
+    () => filterInternships(searchFilteredInternships, internshipFilters),
+    [searchFilteredInternships, internshipFilters]
+  );
 
   useEffect(() => {
     if (!query) return;
@@ -226,12 +287,7 @@ const SearchResults = () => {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
                       {filteredJobs.map((job) => (
                         <div key={job._id} className="fade-in">
-                          <JobCard
-                            job={{
-                              ...job,
-                              jobTitle: highlightText(job.jobTitle, query),
-                            }}
-                          />
+                          <JobCard job={job} query={query} />
                         </div>
                       ))}
                     </div>
@@ -285,7 +341,7 @@ const SearchResults = () => {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
                       {filteredInternships.map((internship) => (
                         <div key={internship._id} className="fade-in">
-                          <InternshipCard internship={internship} />
+                          <InternshipCard internship={internship} query={query} />
                         </div>
                       ))}
                     </div>

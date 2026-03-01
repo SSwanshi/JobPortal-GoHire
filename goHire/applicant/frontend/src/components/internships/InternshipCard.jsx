@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { applicantApi } from '../../services/applicantApi';
 import { formatTimeAgo } from '../../utils/formatTimeAgo';
+import { highlightText } from '../../utils/highlightText';
 
-const InternshipCard = ({ internship }) => {
+const InternshipCard = ({ internship, query }) => {
   const companyName = internship.intCompany?.companyName || 'Company Not Available';
-   const logoUrl = internship.intCompany?.logoId ? applicantApi.getLogo(internship.intCompany.logoId) : null;
+  const logoUrl = internship.intCompany?.logoId ? applicantApi.getLogo(internship.intCompany.logoId) : null;
 
   return (
     <div className="job-card bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -22,22 +23,28 @@ const InternshipCard = ({ internship }) => {
 
           {/* Internship Title + Company Info */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{internship.intTitle}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {highlightText(internship.intTitle, query)}
+            </h3>
             <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mt-1">
-              <span className="font-semibold">{companyName || "N/A"}</span>
+              <span className="font-semibold">
+                {highlightText(companyName || 'N/A', query)}
+              </span>
               <span>•</span>
               <span className="inline-block px-3 py-1 font-medium text-orange-500 bg-orange-100 rounded-full">
-                {internship.intDuration} months
+                {highlightText(`${internship.intDuration} months`, query)}
               </span>
               <span className="inline-block px-3 py-1 font-medium text-purple-500 bg-purple-100 rounded-full">
-                Experience: {internship.intExperience} years
+                {highlightText(`Experience: ${internship.intExperience} years`, query)}
               </span>
               <span className="inline-block px-3 py-1 font-medium text-green-500 bg-green-100 rounded-full">
-                Positions: {internship.intPositions}
+                {highlightText(`Positions: ${internship.intPositions}`, query)}
               </span>
               <span className="inline-block px-3 py-1 font-medium text-red-500 bg-red-100 rounded-full">
-                Expiry:{" "}
-                {new Date(internship.intExpiry).toLocaleDateString("en-GB")}
+                {highlightText(
+                  `Expiry: ${new Date(internship.intExpiry).toLocaleDateString('en-GB')}`,
+                  query
+                )}
               </span>
             </div>
           </div>
@@ -67,7 +74,7 @@ const InternshipCard = ({ internship }) => {
               />
             </svg>
             <span className="text-lg font-semibold text-gray-900">
-              {internship.intLocation}
+              {highlightText(internship.intLocation, query)}
             </span>
           </div>
           <span className="text-sm text-gray-500">
@@ -81,7 +88,11 @@ const InternshipCard = ({ internship }) => {
         <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
           {internship.intRequirements.split("\n").map(
             (point, i) =>
-              point.trim() && <li key={i}>{point.trim()}</li>
+              point.trim() && (
+                <li key={i}>
+                  {highlightText(point.trim(), query)}
+                </li>
+              )
           )}
         </ul>
       )}
@@ -91,7 +102,11 @@ const InternshipCard = ({ internship }) => {
         <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
           {internship.intDescription.split("\n").map(
             (point, i) =>
-              point.trim() && <li key={i}>{point.trim()}</li>
+              point.trim() && (
+                <li key={i}>
+                  {highlightText(point.trim(), query)}
+                </li>
+              )
           )}
         </ul>
       )}
@@ -100,7 +115,7 @@ const InternshipCard = ({ internship }) => {
       <div className="flex items-center justify-between border-t pt-4">
         {internship.intStipend && (
           <div className="text-sm font-medium text-gray-800">
-            {internship.intStipend}
+            {highlightText(internship.intStipend, query)}
           </div>
         )}
         <Link
