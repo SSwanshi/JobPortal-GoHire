@@ -3,18 +3,86 @@ import { Link } from 'react-router-dom';
 import { applicationsApi } from '../services/applicationsApi';
 import { AuthContext } from '../contexts/AuthContext';
 import { Briefcase, Users, TrendingUp, CheckCircle, BadgeCheck, Star, Crown } from 'lucide-react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [applicationData, setApplicationData] = useState({
+    jobApplications: [],
+    internshipApplications: []
+  });
+  const [selectionData, setSelectionData] = useState({
+    jobSelections: [],
+    internshipSelections: []
+  });
 
   const { user, isAuthenticated } = useContext(AuthContext);
+
+  // Helper function to group data by date
+  const groupByDate = () => {
+    const last6Months = [];
+    const currentDate = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      
+      // Mock data for demonstration
+      const count = Math.floor(Math.random() * 15) + 5;
+      
+      last6Months.push({
+        period: monthName,
+        count: count
+      });
+    }
+    
+    return last6Months;
+  };
 
   useEffect(() => {
     const fetchStatistics = async () => { 
       try {
         const data = await applicationsApi.getStatistics();
         setStatistics(data);
+        
+        // Mock application and selection data
+        setApplicationData({
+          jobApplications: Array(50).fill().map(() => ({
+            appliedAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000)
+          })),
+          internshipApplications: Array(30).fill().map(() => ({
+            appliedAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000)
+          }))
+        });
+        
+        setSelectionData({
+          jobSelections: Array(15).fill().map(() => ({
+            selectedAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000)
+          })),
+          internshipSelections: Array(8).fill().map(() => ({
+            selectedAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000)
+          }))
+        });
       } catch (error) {
         console.error('Error fetching statistics:', error);
       } finally {
@@ -27,6 +95,124 @@ const Dashboard = () => {
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
+
+  // Generate chart data
+  const jobApplications = groupByDate(applicationData.jobApplications, 'jobApplication');
+  const internshipApplications = groupByDate(applicationData.internshipApplications, 'internshipApplication');
+  const jobSelections = groupByDate(selectionData.jobSelections, 'jobSelection');
+  const internshipSelections = groupByDate(selectionData.internshipSelections, 'internshipSelection');
+
+  // Application Chart Configuration
+  const applicationChartData = {
+    labels: jobApplications.map(item => item.period),
+    datasets: [
+      {
+        label: 'Job Applications',
+        data: jobApplications.map(item => item.count),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 1,
+      },
+      {
+        label: 'Internship Applications',
+        data: internshipApplications.map(item => item.count),
+        backgroundColor: 'rgba(234, 179, 8, 0.8)',
+        borderColor: 'rgb(234, 179, 8)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const applicationChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Application Trends - Jobs vs Internships (Last 6 Months)',
+        font: {
+          size: 16
+        }
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'Time Period'
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Number of Applications'
+        }
+      },
+    },
+  };
+
+  // Selection Chart Configuration
+  const selectionChartData = {
+    labels: jobSelections.map(item => item.period),
+    datasets: [
+      {
+        label: 'Job Selections',
+        data: jobSelections.map(item => item.count),
+        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 1,
+      },
+      {
+        label: 'Internship Selections',
+        data: internshipSelections.map(item => item.count),
+        backgroundColor: 'rgba(168, 85, 247, 0.8)',
+        borderColor: 'rgb(168, 85, 247)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const selectionChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Selection Success - Jobs vs Internships (Last 6 Months)',
+        font: {
+          size: 16
+        }
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'Time Period'
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Number of Selections'
+        }
+      },
+    },
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -196,6 +382,29 @@ const Dashboard = () => {
         </div>
     </div>
 </section>
+
+      {/* Analytics Charts Section */}
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-bold text-center text-blue-800 mb-12">Analytics Dashboard</h2>
+        
+        {/* Application Trends Chart */}
+        <div className="mb-12">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="h-80">
+              <Bar data={applicationChartData} options={applicationChartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* Selection Success Chart */}
+        <div className="mb-12">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="h-80">
+              <Bar data={selectionChartData} options={selectionChartOptions} />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Statistics Section */}
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
