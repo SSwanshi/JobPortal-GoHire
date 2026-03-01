@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { applicationsApi } from '../services/applicationsApi';
 import { getStoredToken } from '../services/api';
-import { CheckCircle, XCircle, FileText, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { CheckCircle, XCircle, FileText, ArrowLeft, Lock } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import { formatDate } from '../utils/formatDate';
 
 const InternshipApplications = () => {
   const { internshipId } = useParams();
+  const { user } = useAuth();
   // const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [internshipTitle, setInternshipTitle] = useState('');
@@ -218,9 +220,20 @@ const InternshipApplications = () => {
                         }`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {applicantName || 'N/A'}
-                          </div>
+                          {user?.isPremium ? (
+                            <div className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                              <Link to={`/applicant/${application.userId}`} className="hover:underline">
+                                {applicantName || 'N/A'}
+                              </Link>
+                            </div>
+                          ) : (
+                            <div className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                              {applicantName || 'N/A'}
+                              <Link to="/upgrade" title="Upgrade to Pro to view profile">
+                                <Lock className="h-3.5 w-3.5 text-yellow-500" />
+                              </Link>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-600">

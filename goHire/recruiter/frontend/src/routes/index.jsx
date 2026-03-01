@@ -26,6 +26,7 @@ import Profile from '../pages/Profile';
 import EditProfile from '../pages/EditProfile';
 import Applications from '../pages/Applications';
 import InternshipApplications from '../pages/InternshipApplications';
+import ApplicantProfile from '../pages/ApplicantProfile';
 import ChangePassword from '../pages/ChangePassword';
 import NotFound from '../pages/NotFound';
 import Upgrade from '../pages/Upgrade';
@@ -81,6 +82,7 @@ const AppRoutes = () => {
           <Route path="jobs/add" element={<AddJob />} />
           <Route path="jobs/edit/:id" element={<EditJob />} />
           <Route path="jobs/:jobId/applications" element={<Applications />} />
+          <Route path="applicant/:applicantId" element={<ApplicantProfile />} />
           <Route path="internships" element={<Internships />} />
           <Route path="internships/add" element={<AddInternship />} />
           <Route path="internships/edit/:id" element={<EditInternship />} />

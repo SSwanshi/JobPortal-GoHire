@@ -20,15 +20,22 @@ const internapplicantsRoutes = require('./routes/internapplicants.routes');
 const logoRoutes = require('./routes/logo.routes');
 const proofRoutes = require('./routes/proof.routes');
 const upgradeRoutes = require('./routes/upgrade.routes');
+const applicantRoutes = require('./routes/applicant.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5175",
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:5175",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5174"
+  ],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires'],
+  exposedHeaders: ['Cache-Control', 'Pragma', 'Expires']
 }));
 
 // Middleware
@@ -67,6 +74,7 @@ app.use('/api/internapplicants', internapplicantsRoutes);
 app.use('/recruiter/logo', logoRoutes);
 app.use('/recruiter/proof', proofRoutes);
 app.use('/api/upgrade', upgradeRoutes);
+app.use('/api/applicant', applicantRoutes);
 
 // Cron jobs for cleanup
 cron.schedule('0 0 * * *', () => {

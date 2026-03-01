@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const User = require('../models/User');
 
 // Helper to parse simple key=value .env file
 const parseEnvFile = (filePath) => {
@@ -25,27 +26,28 @@ const parseEnvFile = (filePath) => {
   }
 };
 
+// Helper to get stripe instance
+const getStripe = () => {
+  const envPath = path.resolve(__dirname, '..', '..', 'applicant', 'backend', '.env');
+  let env = parseEnvFile(envPath);
+  if (!env) {
+    const altPath = path.resolve(__dirname, '..', '..', '..', 'applicant', 'backend', '.env');
+    env = parseEnvFile(altPath);
+  }
+  const stripeSecret = (env && env.STRIPE_SECRET_KEY) || process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) return null;
+  return require('stripe')(stripeSecret);
+};
+
 const createCheckoutSession = async (req, res) => {
   try {
-    // Attempt to read applicant backend .env for Stripe credentials
-    const envPath = path.resolve(__dirname, '..', '..', 'applicant', 'backend', '.env');
-    let env = parseEnvFile(envPath);
-
-    // Fallback: try relative from recruiter root
-    if (!env) {
-      const altPath = path.resolve(__dirname, '..', '..', '..', 'applicant', 'backend', '.env');
-      env = parseEnvFile(altPath);
-    }
-
-    if (!env || (!env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY)) {
+    const stripe = getStripe();
+    if (!stripe) {
       return res.status(500).json({ success: false, message: 'Stripe configuration missing' });
     }
 
-    const stripeSecret = env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
-    const stripe = require('stripe')(stripeSecret);
-
     // Only supporting Pro monthly plan for now
-    const PRICE_INR = 999; // as per spec
+    const PRICE_INR = 999;
     const unitAmount = PRICE_INR * 100; // in paise
 
     const origin = process.env.FRONTEND_URL || req.headers.origin || `http://localhost:5175`;
@@ -65,8 +67,8 @@ const createCheckoutSession = async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${origin}/profile?checkout=success`,
-      cancel_url: `${origin}/profile?checkout=cancel`,
+      success_url: `${origin}/upgrade?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/upgrade?checkout=cancel`,
       metadata: {
         recruiterId: req.userId ? String(req.userId) : 'unknown'
       }
@@ -79,6 +81,60 @@ const createCheckoutSession = async (req, res) => {
   }
 };
 
+// After successful Stripe checkout, frontend calls this to verify and activate premium
+const verifySession = async (req, res) => {
+  try {
+    const { session_id } = req.body;
+
+    if (!session_id) {
+      return res.status(400).json({ success: false, message: 'Session ID is required' });
+    }
+
+    const stripe = getStripe();
+    if (!stripe) {
+      return res.status(500).json({ success: false, message: 'Stripe configuration missing' });
+    }
+
+    // Retrieve the checkout session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ success: false, message: 'Payment not completed' });
+    }
+
+    // Verify that this session belongs to the current user
+    const recruiterId = session.metadata?.recruiterId;
+    const currentUserId = String(req.userId);
+
+    if (recruiterId !== currentUserId && recruiterId !== 'unknown') {
+      return res.status(403).json({ success: false, message: 'Session does not belong to this user' });
+    }
+
+    // Mark the user as premium
+    const updatedUser = await User.findByIdAndUpdate(
+      req.userId,
+      { isPremium: true },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    console.log(`✅ User ${updatedUser.email} upgraded to Premium`);
+
+    return res.json({
+      success: true,
+      message: 'Premium activated successfully!',
+      isPremium: true
+    });
+  } catch (error) {
+    console.error('Error verifying checkout session:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
-  createCheckoutSession
+  createCheckoutSession,
+  verifySession
 };
