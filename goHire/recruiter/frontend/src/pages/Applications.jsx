@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { applicationsApi } from '../services/applicationsApi';
+import { getStoredToken } from '../services/api';
 import { CheckCircle, XCircle, FileText, ArrowLeft } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import { formatDate } from '../utils/formatDate';
@@ -95,7 +96,8 @@ const Applications = () => {
 
   const getResumeUrl = (resumeId) => {
     if (!resumeId) return null;
-    return `${API_BASE}/api/applications/${jobId}/resume/${resumeId}`;
+    const token = getStoredToken();
+    return `${API_BASE}/api/applications/${jobId}/resume/${resumeId}?token=${encodeURIComponent(token)}`;
   };
 
   const getGenderDisplay = (gender) => {
