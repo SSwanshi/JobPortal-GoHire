@@ -4,7 +4,7 @@ const PremiumUser = require('../models/PremiumUser');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const { connectApplicantDB } = require('../config/applicantDb');
-
+const emailjs = require("@emailjs/nodejs");
 // Note: This assumes PremiumUser model exists in applicant DB
 // You may need to connect to applicant DB to fetch premium users
 
@@ -174,7 +174,27 @@ const selectApplicant = async (req, res) => {
     if (!result) {
       return res.status(404).json({ success: false, message: 'Application not found' });
     }
-    
+
+    const job = await Job.findById(result.jobId);
+    const position = job.jobTitle;
+
+    await emailjs.send(
+      process.env.EMAILJS_APPLICATION_STATUS_SERVICE_ID,
+      process.env.EMAILJS_ACCEPT_TEMPLATE_ID,
+      {
+        candidate_name: `${result.firstName} ${result.lastName}`,
+        position: position, 
+        portal_name: "GoHire",
+        year: new Date().getFullYear(),
+        to_email: result.email,
+        dashboard_link: `${process.env.APPLICANT_FRONTEND_URL}/profile`
+      },
+      {
+        publicKey: process.env.EMAILJS_APPLICATION_STATUS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_APPLICATION_STATUS_PRIVATE_KEY,
+      }
+    );
+
     res.json({ success: true, message: 'Applicant selected successfully' });
   } catch (error) {
     console.error('Error selecting applicant:', error);
@@ -197,6 +217,26 @@ const rejectApplicant = async (req, res) => {
     if (!result) {
       return res.status(404).json({ success: false, message: 'Application not found' });
     }
+
+    const job = await Job.findById(result.jobId);
+    const position = job.jobTitle;
+
+    await emailjs.send(
+      process.env.EMAILJS_APPLICATION_STATUS_SERVICE_ID,
+      process.env.EMAILJS_REJECT_TEMPLATE_ID,
+      {
+        candidate_name: `${result.firstName} ${result.lastName}`,
+        position: position, 
+        portal_name: "GoHire",
+        year: new Date().getFullYear(),
+        to_email: result.email,
+        jobs_link: `${process.env.APPLICANT_FRONTEND_URL}/jobs`
+      },
+      {
+        publicKey: process.env.EMAILJS_APPLICATION_STATUS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_APPLICATION_STATUS_PRIVATE_KEY,
+      }
+    );
     
     res.json({ success: true, message: 'Applicant rejected successfully' });
   } catch (error) {
