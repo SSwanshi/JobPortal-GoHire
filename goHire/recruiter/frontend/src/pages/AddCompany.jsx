@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import CompanyForm from '../components/companies/CompanyForm';
 import { companiesApi } from '../services/companiesApi';
+import { AuthContext } from '../contexts/AuthContext';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const AddCompany = () => {
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -76,6 +79,24 @@ const AddCompany = () => {
           <p className="text-center text-yellow-500 font-medium mb-6">
             Register your company to start posting jobs
           </p>
+
+          {/* Premium Status Info */}
+          {user?.isPremium ? (
+            <div className="mb-6 bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <span className="font-medium">Pro Recruiter: Unlimited companies available!</span>
+            </div>
+          ) : (
+            <div className="mb-6 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <span className="font-medium">Free plan: You can add only 1 company.</span>
+              </div>
+              <Link to="/upgrade" className="text-sm bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700 transition">
+                Upgrade to Pro
+              </Link>
+            </div>
+          )}
 
           {/* Success Message */}
           {success && (

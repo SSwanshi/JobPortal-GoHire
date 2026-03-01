@@ -27,6 +27,18 @@ const addInternship = async (req, res) => {
       intExpiry
     } = req.body;
 
+    // Check if non-premium user has already posted an internship
+    if (!req.user.isPremium) {
+      const existingInternshipCount = await Internship.countDocuments({ createdBy: req.userId });
+      if (existingInternshipCount >= 1) {
+        return res.status(403).json({
+          success: false,
+          message: "Free users can only post 1 internship. Upgrade to Pro for unlimited internship posts!",
+          limitReached: true
+        });
+      }
+    }
+
     if (!intTitle || !intDescription || !intRequirements || intStipend === undefined || intStipend === null ||
       !intLocation || !intDuration || intExperience === undefined || intExperience === null || !intPositions || !intCompany || !intExpiry) {
       return res.status(400).json({ success: false, message: 'All fields are required' });

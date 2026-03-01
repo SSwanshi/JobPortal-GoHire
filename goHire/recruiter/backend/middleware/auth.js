@@ -35,7 +35,8 @@ const requireAuth = async (req, res, next) => {
       email: user.email,
       phone: user.phone,
       gender: user.gender,
-      profileImage: user.profileImage
+      profileImage: user.profileImage,
+      isPremium: user.isPremium
     };
     req.userId = user._id;
     next();

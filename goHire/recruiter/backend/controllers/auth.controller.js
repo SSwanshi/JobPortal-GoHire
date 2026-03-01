@@ -64,7 +64,8 @@ const login = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        gender: user.gender
+        gender: user.gender,
+        isPremium: user.isPremium
       }
     });
   } catch (error) {
@@ -168,7 +169,8 @@ const checkSession = async (req, res) => {
         email: req.user.email,
         phone: req.user.phone,
         gender: req.user.gender,
-        profileImage: req.user.profileImage
+        profileImage: req.user.profileImage,
+        isPremium: req.user.isPremium
       }
     });
   } else {
@@ -199,7 +201,8 @@ const getProfile = async (req, res) => {
         phone: user.phone,
         gender: user.gender,
         profileImage: user.profileImage,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        isPremium: user.isPremium
       }
     });
   } catch (error) {
@@ -652,7 +655,8 @@ const verify2FA = async (req, res) => {
         email: user.email,
         phone: user.phone,
         gender: user.gender,
-        profileImage: user.profileImage
+        profileImage: user.profileImage,
+        isPremium: user.isPremium
       }
     });
   } catch (error) {

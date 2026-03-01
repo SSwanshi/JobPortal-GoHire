@@ -16,6 +16,18 @@ const addCompany = async (req, res) => {
   try {
     const { companyName, website, location } = req.body;
 
+    // Check if non-premium user has already added a company
+    if (!req.user.isPremium) {
+      const existingCompanyCount = await Company.countDocuments({ createdBy: req.userId });
+      if (existingCompanyCount >= 1) {
+        return res.status(403).json({
+          success: false,
+          message: "Free users can only add 1 company. Upgrade to Pro for unlimited companies!",
+          limitReached: true
+        });
+      }
+    }
+
     if (!companyName || !website || !location) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }

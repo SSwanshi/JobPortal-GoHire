@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../services/authApi';
 import { useAuth } from '../hooks/useAuth';
-import { Pencil, Upload, Trash2, LogOut, Lock, User as UserIcon } from 'lucide-react';
+import { Pencil, Upload, Trash2, LogOut, Lock, User as UserIcon, Crown } from 'lucide-react';
 import defaultImage from '../assets/images/default.png';
 
 const Profile = () => {
@@ -180,6 +180,11 @@ const Profile = () => {
                     e.target.src = defaultImage;
                   }}
                 />
+                {profile.isPremium && (
+                  <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full p-1 shadow-md">
+                    <Crown className="h-5 w-5 text-white" />
+                  </div>
+                )}
                 {uploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
                     <span className="text-white text-xs">Uploading...</span>

@@ -27,6 +27,18 @@ const addJob = async (req, res) => {
       jobExpiry
     } = req.body;
 
+    // Check if non-premium user has already posted a job
+    if (!req.user.isPremium) {
+      const existingJobCount = await Job.countDocuments({ createdBy: req.userId });
+      if (existingJobCount >= 1) {
+        return res.status(403).json({
+          success: false,
+          message: "Free users can only post 1 job. Upgrade to Pro for unlimited job posts!",
+          limitReached: true
+        });
+      }
+    }
+
     if (!jobTitle || !jobDescription || !jobRequirements || !jobSalary ||
       !jobLocation || !jobType || !jobExperience || !noofPositions || !jobCompany || !jobExpiry) {
       return res.status(400).json({ success: false, message: "All fields are required" });

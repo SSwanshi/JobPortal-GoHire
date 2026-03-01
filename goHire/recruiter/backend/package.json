@@ -33,7 +33,8 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.11",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

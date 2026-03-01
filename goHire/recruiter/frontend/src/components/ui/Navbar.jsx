@@ -80,6 +80,14 @@ const Navbar = () => {
             </li>
             <li>
               <Link
+                to="/upgrade"
+                className="hover:text-blue-900 font-medium transition-colors duration-300"
+              >
+                Upgrade
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/jobs"
                 className="hover:text-blue-900 font-medium transition-colors duration-300"
               >

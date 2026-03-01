@@ -13,7 +13,8 @@ const UserSchema = new mongoose.Schema({
   },
   otp: { type: String, default: null },
   otpExpiry: { type: Date, default: null },
-  twoFactorEnabled: { type: Boolean, default: true }
+  twoFactorEnabled: { type: Boolean, default: true },
+  isPremium: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model("RecruiterUser", UserSchema);

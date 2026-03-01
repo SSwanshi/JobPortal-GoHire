@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applicationsApi } from '../services/applicationsApi';
 import { AuthContext } from '../contexts/AuthContext';
-import { Briefcase, Users, TrendingUp, CheckCircle, BadgeCheck } from 'lucide-react';
+import { Briefcase, Users, TrendingUp, CheckCircle, BadgeCheck, Star, Crown } from 'lucide-react';
 
 const Dashboard = () => {
   const [statistics, setStatistics] = useState(null);
@@ -68,19 +68,39 @@ const Dashboard = () => {
 
               {/* Feature Pills */}
               <div className="flex flex-wrap gap-4 pt-4">
-                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 py-3 rounded-full border border-white border-opacity-20">
+                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 h-12 rounded-full border border-white border-opacity-20 whitespace-nowrap">
                   <CheckCircle className="w-5 h-5 mr-2 text-yellow-400" />
                   <span className="text-blue-900 font-bold">Easy Management</span>
                 </div>
-                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 py-3 rounded-full border border-white border-opacity-20">
+                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 h-12 rounded-full border border-white border-opacity-20 whitespace-nowrap">
                   <CheckCircle className="w-5 h-5 mr-2 text-yellow-400" />
                   <span className="text-blue-900 font-bold">Real-time Tracking</span>
                 </div>
-                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 py-3 rounded-full border border-white border-opacity-20">
+                <div className="flex items-center bg-white bg-opacity-10 backdrop-blur-sm text-white px-5 h-12 rounded-full border border-white border-opacity-20 whitespace-nowrap">
                   <CheckCircle className="w-5 h-5 mr-2 text-yellow-400" />
                   <span className="text-blue-900 font-bold">All-in-One Platform</span>
                 </div>
+                <div>
+                {user?.isPremium ? (
+                  <div className="inline-flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-blue-900 font-semibold px-4 py-3 rounded-full shadow-lg">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-900 text-yellow-400">
+                      <Crown className="w-4 h-4" />
+                    </span>
+                    <span>Pro Recruiter</span>
+                  </div>
+                ) : (
+                  <Link to="/upgrade" className="inline-flex items-center gap-3 bg-yellow-400 text-blue-900 font-semibold px-4 py-3 rounded-full shadow-lg hover:bg-yellow-300 transition">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-900 text-white">
+                      <Star className="w-4 h-4" />
+                    </span>
+                    <span>Upgrade to Pro</span>
+                  </Link>
+                )}
               </div>
+              </div>
+
+              {/* Upgrade CTA */}
+              
             </div>
 
             {/* Right Image */}
