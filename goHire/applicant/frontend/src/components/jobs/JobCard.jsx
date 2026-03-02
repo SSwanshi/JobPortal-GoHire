@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { applicantApi } from '../../services/applicantApi';
 import { formatTimeAgo } from '../../utils/formatTimeAgo';
-// Utility function to format "time ago"
+import { highlightText } from '../../utils/highlightText';
 
-
-const JobCard = ({ job }) => {
+const JobCard = ({ job, query }) => {
   const companyName = job.jobCompany?.companyName || 'Company Not Available';
   const logoUrl = job.jobCompany?.logoId ? applicantApi.getLogo(job.jobCompany.logoId) : null;
   const jobRequirements = job.jobRequirements ? job.jobRequirements.split('\n').filter(Boolean) : [];
@@ -36,21 +35,25 @@ const JobCard = ({ job }) => {
 
           {/* Job Title and Company Info */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{job.jobTitle || 'N/A'}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {highlightText(job.jobTitle || 'N/A', query)}
+            </h3>
             <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
-              <span className="font-semibold">{companyName}</span>
+              <span className="font-semibold">
+                {highlightText(companyName, query)}
+              </span>
               <span>•</span>
               <span className="inline-block px-3 py-1 text-sm font-medium text-orange-500 bg-orange-100 rounded-full">
-                {job.jobType || 'N/A'}
+                {highlightText(job.jobType || 'N/A', query)}
               </span>
               <span className="inline-block px-3 py-1 text-sm font-medium text-purple-500 bg-purple-100 rounded-full">
-                Experience: {job.jobExperience || 0} years
+                {highlightText(`Experience: ${job.jobExperience || 0} years`, query)}
               </span>
               <span className="inline-block px-3 py-1 text-sm font-medium text-green-500 bg-green-100 rounded-full">
-                Positions: {job.noofPositions || 0}
+                {highlightText(`Positions: ${job.noofPositions || 0}`, query)}
               </span>
               <span className="inline-block px-3 py-1 text-sm font-medium text-red-500 bg-red-100 rounded-full">
-                Expiry: {expiryDate}
+                {highlightText(`Expiry: ${expiryDate}`, query)}
               </span>
             </div>
           </div>
@@ -79,7 +82,9 @@ const JobCard = ({ job }) => {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span className="text-lg font-semibold text-gray-900">{job.jobLocation || 'N/A'}</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {highlightText(job.jobLocation || 'N/A', query)}
+            </span>
           </div>
           <span>Posted {formatTimeAgo(job.createdAt)}</span>
         </div>
@@ -90,7 +95,7 @@ const JobCard = ({ job }) => {
         <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
           {jobRequirements.map((req, i) => (
             <li key={i} className="leading-snug">
-              {req.trim()}
+              {highlightText(req.trim(), query)}
             </li>
           ))}
         </ul>
@@ -101,7 +106,7 @@ const JobCard = ({ job }) => {
         <ul className="text-sm text-gray-600 list-disc list-inside mb-4 space-y-1.5 pl-1">
           {jobDescription.map((desc, i) => (
             <li key={i} className="leading-snug">
-              {desc.trim()}
+              {highlightText(desc.trim(), query)}
             </li>
           ))}
         </ul>
@@ -110,7 +115,9 @@ const JobCard = ({ job }) => {
       {/* Salary and Apply */}
       <div className="flex items-center justify-between border-t pt-4">
         {job.jobSalary && (
-          <div className="text-sm font-medium text-gray-800">{job.jobSalary} LPA</div>
+          <div className="text-sm font-medium text-gray-800">
+            {highlightText(`${job.jobSalary} LPA`, query)}
+          </div>
         )}
         <Link
           to={`/jobs/${job._id}/apply`}
