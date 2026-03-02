@@ -3,7 +3,7 @@ import api from './api';
 export const applicantApi = {
   getJobs: async (query) => {
     let endpoint;
-    if(query) endpoint = `/applicant/jobs?${query}`
+    if (query) endpoint = `/applicant/jobs?${query}`
     else endpoint = `/applicant/jobs`
     const response = await api.get(endpoint);
     return response.data;
@@ -11,7 +11,7 @@ export const applicantApi = {
 
   getInternships: async (query) => {
     let endpoint;
-    if(query) endpoint = `/applicant/internships?${query}`
+    if (query) endpoint = `/applicant/internships?${query}`
     else endpoint = `applicant/internships`
     const response = await api.get(endpoint);
     console.log(response.data);
@@ -33,8 +33,18 @@ export const applicantApi = {
     return response.data;
   },
 
-  applyForJob: async (jobId) => {
-    const response = await api.post(`/applicant/jobs/${jobId}/apply`);
+  applyForJob: async (jobId, resumeId = null) => {
+    const body = resumeId ? { resumeId } : {};
+    const response = await api.post(`/applicant/jobs/${jobId}/apply`, body);
+    return response.data;
+  },
+
+  uploadJobApplicationResume: async (jobId, file) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const response = await api.post(`/applicant/jobs/${jobId}/apply/resume`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 
@@ -43,8 +53,18 @@ export const applicantApi = {
     return response.data;
   },
 
-  applyForInternship: async (internshipId) => {
-    const response = await api.post(`/applicant/internships/${internshipId}/apply`);
+  applyForInternship: async (internshipId, resumeId = null) => {
+    const body = resumeId ? { resumeId } : {};
+    const response = await api.post(`/applicant/internships/${internshipId}/apply`, body);
+    return response.data;
+  },
+
+  uploadInternshipApplicationResume: async (internshipId, file) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const response = await api.post(`/applicant/internships/${internshipId}/apply/resume`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 

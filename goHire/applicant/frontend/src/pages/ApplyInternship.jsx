@@ -14,6 +14,12 @@ const ApplyInternship = () => {
     const [toastVisible, setToastVisible] = useState(false);
     const [alreadyApplied, setAlreadyApplied] = useState(false);
 
+    const [resumeOption, setResumeOption] = useState('same');
+    const [applicationResumeId, setApplicationResumeId] = useState(null);
+    const [resumeFileName, setResumeFileName] = useState(null);
+    const [uploadingResume, setUploadingResume] = useState(false);
+    const [uploadResumeError, setUploadResumeError] = useState(null);
+
     useEffect(() => {
         const fetchInternship = async () => {
             try {
@@ -37,14 +43,44 @@ const ApplyInternship = () => {
         fetchInternship();
     }, [internshipId]);
 
+    const handleResumeFileChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !internshipId) return;
+        if (file.type !== 'application/pdf') {
+            setUploadResumeError('Please upload a PDF file.');
+            return;
+        }
+        setUploadResumeError(null);
+        setUploadingResume(true);
+        try {
+            const data = await applicantApi.uploadInternshipApplicationResume(internshipId, file);
+            if (data?.resumeId) {
+                setApplicationResumeId(data.resumeId);
+                setResumeFileName(file.name);
+            } else {
+                setUploadResumeError(data?.error || 'Upload failed.');
+            }
+        } catch (err) {
+            setUploadResumeError(err.response?.data?.error || 'Failed to upload resume.');
+        } finally {
+            setUploadingResume(false);
+        }
+    };
+
     const handleApply = async () => {
         if (!internshipId || submitting || alreadyApplied) return;
+
+        if (resumeOption === 'specific' && !applicationResumeId) {
+            setError('Please upload an internship-specific resume first.');
+            return;
+        }
 
         try {
             setSubmitting(true);
             setError(null);
 
-            const response = await applicantApi.applyForInternship(internshipId);
+            const resumeId = resumeOption === 'specific' ? applicationResumeId : null;
+            const response = await applicantApi.applyForInternship(internshipId, resumeId);
 
             if (response?.success) {
                 setToastVisible(true);
@@ -289,11 +325,73 @@ const ApplyInternship = () => {
                                     </div>
                                 </div>
 
+                                {/* Resume selection */}
+                                {!alreadyApplied && (
+                                    <div className="bg-gray-50 rounded-lg p-5 mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                            Resume for this application
+                                        </h3>
+                                        <div className="space-y-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="resumeOption"
+                                                    checked={resumeOption === 'same'}
+                                                    onChange={() => {
+                                                        setResumeOption('same');
+                                                        setUploadResumeError(null);
+                                                    }}
+                                                    className="w-4 h-4 text-blue-600"
+                                                />
+                                                <span>Use my default resume</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="resumeOption"
+                                                    checked={resumeOption === 'specific'}
+                                                    onChange={() => {
+                                                        setResumeOption('specific');
+                                                        setUploadResumeError(null);
+                                                    }}
+                                                    className="w-4 h-4 text-blue-600"
+                                                />
+                                                <span>Use an internship-specific resume</span>
+                                            </label>
+                                            {resumeOption === 'specific' && (
+                                                <div className="mt-3 pl-6 space-y-2">
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf,application/pdf"
+                                                        onChange={handleResumeFileChange}
+                                                        disabled={uploadingResume}
+                                                        className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                    />
+                                                    {uploadingResume && (
+                                                        <p className="text-sm text-gray-500">Uploading...</p>
+                                                    )}
+                                                    {resumeFileName && !uploadingResume && (
+                                                        <p className="text-sm text-green-600 flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            Uploaded: {resumeFileName}
+                                                        </p>
+                                                    )}
+                                                    {uploadResumeError && (
+                                                        <p className="text-sm text-red-600">{uploadResumeError}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Apply Button */}
                                 <button
                                     type="button"
                                     onClick={handleApply}
-                                    disabled={submitting || alreadyApplied}
+                                    disabled={submitting || alreadyApplied || (resumeOption === 'specific' && !applicationResumeId)}
                                     className={`w-full font-bold py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-lg flex items-center justify-center ${alreadyApplied
                                         ? 'bg-green-400 text-green-900 cursor-not-allowed'
                                         : 'bg-yellow-400 hover:bg-yellow-500 text-blue-800'

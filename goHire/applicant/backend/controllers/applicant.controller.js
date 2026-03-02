@@ -4,10 +4,12 @@ const connectRecruiterDB = require("../config/recruiterDB");
 const createJobModel = require("../models/recruiter/Job");
 const createInternshipModel = require("../models/recruiter/Internships");
 const createCompanyModel = require("../models/recruiter/Company");
+const { ObjectId } = require("mongodb");
 const User = require("../models/user");
 const Applied_for_Jobs = require("../models/Applied_for_Jobs");
 const Applied_for_Internships = require("../models/Applied_for_Internships");
 const Fuse = require("fuse.js");
+const { getBucket } = require("../config/db");
 
 const getJobs = async (req, res) => {
   try {
@@ -295,10 +297,77 @@ const getInternshipById = async (req, res) => {
   }
 };
 
+const uploadJobApplicationResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No resume file uploaded." });
+    }
+    const userId = req.user?.id;
+    const { jobId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Please login to upload resume." });
+    }
+
+    const bucket = getBucket();
+    const uploadStream = bucket.openUploadStream(req.file.originalname, {
+      contentType: "application/pdf",
+      metadata: { userId, jobId },
+    });
+
+    uploadStream.end(req.file.buffer);
+
+    uploadStream.on("finish", () => {
+      res.json({ success: true, resumeId: uploadStream.id.toString() });
+    });
+
+    uploadStream.on("error", (err) => {
+      console.error("Upload stream error:", err);
+      res.status(500).json({ success: false, error: "Resume upload failed." });
+    });
+  } catch (err) {
+    console.error("Error uploading job application resume:", err);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+const uploadInternshipApplicationResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No resume file uploaded." });
+    }
+    const userId = req.user?.id;
+    const { internshipId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Please login to upload resume." });
+    }
+
+    const bucket = getBucket();
+    const uploadStream = bucket.openUploadStream(req.file.originalname, {
+      contentType: "application/pdf",
+      metadata: { userId, internshipId },
+    });
+
+    uploadStream.end(req.file.buffer);
+
+    uploadStream.on("finish", () => {
+      res.json({ success: true, resumeId: uploadStream.id.toString() });
+    });
+
+    uploadStream.on("error", (err) => {
+      console.error("Upload stream error:", err);
+      res.status(500).json({ success: false, error: "Resume upload failed." });
+    });
+  } catch (err) {
+    console.error("Error uploading internship application resume:", err);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
 const applyForJob = async (req, res) => {
   try {
     const userId = req.user?.id;
     const { jobId } = req.params;
+    const { resumeId: applicationResumeId } = req.body || {};
 
     if (!userId) {
       return res
@@ -311,10 +380,27 @@ const applyForJob = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (!user.resumeId) {
-      return res
-        .status(400)
-        .json({ error: "Please upload Resume to apply for this job." });
+    let resumeIdToUse = null;
+
+    if (applicationResumeId) {
+      const bucket = getBucket();
+      const files = await bucket.find({ _id: new ObjectId(applicationResumeId) }).toArray();
+      if (files.length === 0) {
+        return res.status(400).json({ error: "Invalid resume. Please upload the resume again." });
+      }
+      const file = files[0];
+      const meta = file.metadata || {};
+      if (meta.userId !== userId || meta.jobId !== jobId) {
+        return res.status(400).json({ error: "Resume does not belong to this application." });
+      }
+      resumeIdToUse = new ObjectId(applicationResumeId);
+    } else {
+      if (!user.resumeId) {
+        return res
+          .status(400)
+          .json({ error: "Please upload a resume (default or job-specific) to apply for this job." });
+      }
+      resumeIdToUse = user.resumeId;
     }
 
     const alreadyApplied = await Applied_for_Jobs.findOne({ userId, jobId });
@@ -341,7 +427,7 @@ const applyForJob = async (req, res) => {
       phone: user.phone,
       gender: user.gender,
       password: user.password,
-      resumeId: user.resumeId,
+      resumeId: resumeIdToUse,
       memberSince: user.memberSince,
     });
 
@@ -390,6 +476,7 @@ const applyForInternship = async (req, res) => {
   try {
     const userId = req.user?.id;
     const { internshipId } = req.params;
+    const { resumeId: applicationResumeId } = req.body || {};
 
     if (!userId) {
       return res
@@ -402,10 +489,27 @@ const applyForInternship = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (!user.resumeId) {
-      return res
-        .status(400)
-        .json({ error: "Please upload Resume to apply for this internship." });
+    let resumeIdToUse = null;
+
+    if (applicationResumeId) {
+      const bucket = getBucket();
+      const files = await bucket.find({ _id: new ObjectId(applicationResumeId) }).toArray();
+      if (files.length === 0) {
+        return res.status(400).json({ error: "Invalid resume. Please upload the resume again." });
+      }
+      const file = files[0];
+      const meta = file.metadata || {};
+      if (meta.userId !== userId || meta.internshipId !== internshipId) {
+        return res.status(400).json({ error: "Resume does not belong to this application." });
+      }
+      resumeIdToUse = new ObjectId(applicationResumeId);
+    } else {
+      if (!user.resumeId) {
+        return res
+          .status(400)
+          .json({ error: "Please upload a resume (default or internship-specific) to apply for this internship." });
+      }
+      resumeIdToUse = user.resumeId;
     }
 
     const alreadyApplied = await Applied_for_Internships.findOne({
@@ -435,7 +539,7 @@ const applyForInternship = async (req, res) => {
       phone: user.phone,
       gender: user.gender,
       password: user.password,
-      resumeId: user.resumeId,
+      resumeId: resumeIdToUse,
       memberSince: user.memberSince,
     });
 
@@ -473,7 +577,7 @@ const getAppliedInternships = async (req, res) => {
 const getLogo = async (req, res) => {
   try {
     const logoId = req.params.logoId;
-    
+
     if (!logoId || !mongoose.Types.ObjectId.isValid(logoId)) {
       return res.status(400).json({ error: "Invalid logo ID" });
     }
@@ -568,6 +672,8 @@ module.exports = {
   filterInternships,
   getJobById,
   getInternshipById,
+  uploadJobApplicationResume,
+  uploadInternshipApplicationResume,
   applyForJob,
   checkInternshipApplication,
   applyForInternship,
