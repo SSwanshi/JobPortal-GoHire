@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const cron = require('node-cron');
 require('dotenv').config();
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./docs/swaggerDef');
+
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
@@ -65,6 +68,9 @@ if (process.env.MONGO_URI_APPLICANT) {
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'recruiter', port: PORT });
 });
+
+// Swagger Documentation API
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API Routes
 app.use('/api/auth', authRoutes);

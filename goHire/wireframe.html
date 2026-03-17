@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoHire — Project Wireframe &amp; Architecture</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      line-height: 1.6;
+    }
+    a { color: #4361ee; text-decoration: none; }
+
+    /* ===== HEADER ===== */
+    .main-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      padding: 48px 32px;
+      text-align: center;
+      border-bottom: 4px solid #4361ee;
+    }
+    .main-header h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; }
+    .main-header p { font-size: 16px; color: #a8b2d1; margin-top: 8px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .badge-row { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    .badge-row span {
+      display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.2); color: #a8b2d1;
+    }
+
+    /* ===== NAV ===== */
+    .toc {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 14px 32px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .toc a {
+      font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 6px;
+      color: #1a1a2e; border: 1px solid #e0e0e0;
+    }
+    .toc a:hover { background: #4361ee; color: #fff; border-color: #4361ee; }
+    .toc a.admin-link { border-left: 3px solid #e63946; }
+    .toc a.applicant-link { border-left: 3px solid #2a9d8f; }
+    .toc a.recruiter-link { border-left: 3px solid #e9c46a; }
+    .toc a.arch-link { border-left: 3px solid #4361ee; }
+
+    /* ===== LAYOUT ===== */
+    .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+    /* ===== SECTION ===== */
+    .section { margin-bottom: 48px; }
+    .section-title {
+      font-size: 28px; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .section-title .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .section-subtitle { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card h4 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ===== GRIDS ===== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 1200px) { .grid-3 { grid-template-columns: 1fr 1fr; } .grid-4 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 800px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+    /* ===== TABLES ===== */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; }
+    th { font-weight: 700; background: #f8f9fa; color: #444; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td code {
+      background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    .method { font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; min-width: 50px; text-align: center; }
+    .method.get { background: #d4edda; color: #155724; }
+    .method.post { background: #cce5ff; color: #004085; }
+    .method.put { background: #fff3cd; color: #856404; }
+    .method.delete { background: #f8d7da; color: #721c24; }
+
+    /* ===== TAG/BADGE ===== */
+    .tag {
+      display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+      margin: 2px 2px;
+    }
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-green { background: #d1fae5; color: #065f46; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-yellow { background: #fef3c7; color: #92400e; }
+    .tag-purple { background: #ede9fe; color: #5b21b6; }
+    .tag-gray { background: #f3f4f6; color: #374151; }
+
+    /* ===== PORT BADGE ===== */
+    .port-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* ===== MODULE COLORS ===== */
+    .admin-accent { border-left: 4px solid #e63946; }
+    .applicant-accent { border-left: 4px solid #2a9d8f; }
+    .recruiter-accent { border-left: 4px solid #e9c46a; }
+
+    .admin-bg { background: #fef2f2; }
+    .applicant-bg { background: #f0fdf4; }
+    .recruiter-bg { background: #fefce8; }
+
+    /* ===== WIREFRAME BOXES ===== */
+    .wireframe-page {
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      margin-bottom: 16px;
+    }
+    .wireframe-topbar {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .wireframe-topbar .dots { display: flex; gap: 5px; }
+    .wireframe-topbar .dot-r { width: 8px; height: 8px; border-radius: 50%; background: #e63946; }
+    .wireframe-topbar .dot-y { width: 8px; height: 8px; border-radius: 50%; background: #e9c46a; }
+    .wireframe-topbar .dot-g { width: 8px; height: 8px; border-radius: 50%; background: #2a9d8f; }
+    .wireframe-content { padding: 16px; min-height: 140px; }
+    .wireframe-nav {
+      background: #f8f9fa; border-bottom: 1px solid #e0e0e0; padding: 6px 14px;
+      display: flex; gap: 12px; font-size: 11px; color: #666;
+    }
+    .wireframe-nav span { padding: 3px 8px; border-radius: 4px; }
+    .wireframe-nav span.active { background: #4361ee; color: #fff; }
+    .wireframe-sidebar {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      min-height: 180px;
+    }
+    .wireframe-sidebar-left {
+      background: #f8f9fa; border-right: 1px solid #e0e0e0; padding: 12px;
+      font-size: 11px; color: #666; display: flex; flex-direction: column; gap: 6px;
+    }
+    .wireframe-sidebar-left span { padding: 4px 8px; border-radius: 4px; }
+    .wireframe-sidebar-left span.active { background: #4361ee; color: #fff; }
+    .wireframe-sidebar-right { padding: 14px; }
+    .wireframe-placeholder {
+      background: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 6px;
+      padding: 12px; text-align: center; color: #9ca3af; font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .wireframe-stat-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .wireframe-stat {
+      flex: 1; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px;
+      padding: 10px; text-align: center;
+    }
+    .wireframe-stat .num { font-size: 20px; font-weight: 800; color: #1a1a2e; }
+    .wireframe-stat .label { font-size: 10px; color: #666; text-transform: uppercase; }
+    .wireframe-table-mock { width: 100%; }
+    .wireframe-table-mock .row {
+      display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px; color: #888;
+    }
+    .wireframe-table-mock .row.header { font-weight: 700; color: #444; }
+    .wireframe-table-mock .col { flex: 1; }
+    .wireframe-form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .wireframe-input {
+      flex: 1; height: 28px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px;
+    }
+    .wireframe-btn {
+      display: inline-block; padding: 4px 14px; background: #4361ee; color: #fff;
+      border-radius: 4px; font-size: 11px; font-weight: 600; border: none;
+    }
+
+    /* ===== ARCHITECTURE DIAGRAM ===== */
+    .arch-diagram {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 32px;
+      overflow-x: auto;
+    }
+    .arch-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .arch-box {
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      padding: 16px 20px;
+      min-width: 200px;
+      text-align: center;
+      position: relative;
+    }
+    .arch-box h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .arch-box p { font-size: 11px; color: #666; }
+    .arch-box.admin { border-color: #e63946; background: #fef2f2; }
+    .arch-box.applicant { border-color: #2a9d8f; background: #f0fdf4; }
+    .arch-box.recruiter { border-color: #e9c46a; background: #fefce8; }
+    .arch-box.db { border-color: #7c3aed; background: #f5f3ff; }
+    .arch-box.service { border-color: #4361ee; background: #eff6ff; }
+    .arch-arrow {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 20px;
+      margin: 8px 0;
+      letter-spacing: 4px;
+    }
+    .arch-connector {
+      display: flex; justify-content: center; align-items: center; gap: 12px;
+      margin: 12px 0; color: #9ca3af; font-size: 12px;
+    }
+    .arch-connector .line { flex: 1; height: 1px; background: #d1d5db; max-width: 100px; }
+
+    /* ===== MODEL FIELDS ===== */
+    .model-fields { font-size: 12px; }
+    .model-fields .field { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #eee; }
+    .model-fields .field-name { font-weight: 600; color: #1a1a2e; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; }
+    .model-fields .field-type { color: #7c3aed; font-size: 11px; }
+
+    /* ===== FLOW DIAGRAM ===== */
+    .flow-container { display: flex; flex-direction: column; gap: 0; align-items: center; }
+    .flow-step {
+      background: #fff; border: 2px solid #d1d5db; border-radius: 10px;
+      padding: 12px 24px; text-align: center; min-width: 280px;
+    }
+    .flow-step h5 { font-size: 13px; font-weight: 700; }
+    .flow-step p { font-size: 11px; color: #666; }
+    .flow-arrow-down {
+      width: 2px; height: 24px; background: #d1d5db; position: relative;
+    }
+    .flow-arrow-down::after {
+      content: ''; position: absolute; bottom: -5px; left: -4px;
+      border-left: 5px solid transparent; border-right: 5px solid transparent;
+      border-top: 6px solid #d1d5db;
+    }
+
+    /* ===== FOOTER ===== */
+    .main-footer {
+      background: #1a1a2e;
+      color: #a8b2d1;
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+      margin-top: 40px;
+    }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d1d5db, transparent);
+      margin: 48px 0;
+    }
+
+    /* ===== LEGEND ===== */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+      padding: 12px 16px; background: #fff; border-radius: 8px; border: 1px solid #e0e0e0;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!--  HEADER                                                       -->
+<!-- ============================================================ -->
+<header class="main-header">
+  <h1>GoHire</h1>
+  <p>Full-Stack Job &amp; Internship Portal — Complete Project Wireframe, Architecture &amp; Workflow Documentation</p>
+  <div class="badge-row">
+    <span>React 18 + Vite</span>
+    <span>Express.js</span>
+    <span>MongoDB + GridFS</span>
+    <span>Redux Toolkit</span>
+    <span>Stripe Payments</span>
+    <span>SOAP/WSDL</span>
+    <span>JWT + 2FA</span>
+    <span>Tailwind CSS</span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!--  NAVIGATION                                                   -->
+<!-- ============================================================ -->
+<nav class="toc">
+  <a href="#architecture" class="arch-link">Architecture</a>
+  <a href="#database" class="arch-link">Database</a>
+  <a href="#workflow" class="arch-link">Workflow</a>
+  <a href="#admin-backend" class="admin-link">Admin Backend</a>
+  <a href="#admin-frontend" class="admin-link">Admin Frontend</a>
+  <a href="#admin-wireframes" class="admin-link">Admin Wireframes</a>
+  <a href="#applicant-backend" class="applicant-link">Applicant Backend</a>
+  <a href="#applicant-frontend" class="applicant-link">Applicant Frontend</a>
+  <a href="#applicant-wireframes" class="applicant-link">Applicant Wireframes</a>
+  <a href="#recruiter-backend" class="recruiter-link">Recruiter Backend</a>
+  <a href="#recruiter-frontend" class="recruiter-link">Recruiter Frontend</a>
+  <a href="#recruiter-wireframes" class="recruiter-link">Recruiter Wireframes</a>
+</nav>
+
+<div class="container">
+
+<!-- ============================================================ -->
+<!--  SYSTEM ARCHITECTURE                                          -->
+<!-- ============================================================ -->
+<section class="section" id="architecture">
+  <div class="section-title"><span class="dot" style="background:#4361ee"></span> System Architecture Overview</div>
+  <p class="section-subtitle">Three independent full-stack modules sharing MongoDB databases via cross-database connections</p>
+
+  <div class="arch-diagram">
+    <!-- Clients Row -->
+    <div style="text-align:center;margin-bottom:8px;font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:1px;">Browser Clients</div>
+    <div class="arch-row">
+      <div class="arch-box admin">
+        <h4>Admin Frontend</h4>
+        <p>Vite + React &bull; Port 5173</p>
+        <p style="margin-top:4px"><span class="tag tag-red">Session Auth</span></p>
+      </div>
+      <div class="arch-box applicant">
+        <h4>Applicant Frontend</h4>
+        <p>Vite + React &bull; Port 5174</p>
+        <p style="margin-top:4px"><span class="tag tag-green">JWT Auth</span></p>
+      </div>
+      <div class="arch-box recruiter">
+        <h4>Recruiter Frontend</h4>
+        <p>Vite + React &bull; Port 5175</p>
+        <p style="margin-top:4px"><span class="tag tag-yellow">JWT Auth</span></p>
+      </div>
+    </div>
+
+    <div class="arch-arrow">&#9660; &nbsp; HTTP/REST API &nbsp; &#9660;</div>
+
+    <!-- Servers Row -->
+    <div style="text-align:center;margin-bottom:8px;font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:1px;">Express.js API Servers</div>
+    <div class="arch-row">
+      <div class="arch-box admin">
+        <h4>Admin Server</h4>
+        <p>Port 9000 &bull; Session + MongoStore</p>
+        <p style="margin-top:4px"><span class="tag tag-purple">SOAP/WSDL</span> <span class="tag tag-gray">2FA OTP</span></p>
+      </div>
+      <div class="arch-box applicant">
+        <h4>Applicant Server</h4>
+        <p>Port 3000 &bull; JWT + Bcrypt</p>
+        <p style="margin-top:4px"><span class="tag tag-blue">Stripe</span> <span class="tag tag-gray">2FA OTP</span> <span class="tag tag-green">Fuse.js Search</span></p>
+      </div>
+      <div class="arch-box recruiter">
+        <h4>Recruiter Server</h4>
+        <p>Port 5000 &bull; JWT + Bcrypt</p>
+        <p style="margin-top:4px"><span class="tag tag-blue">Stripe</span> <span class="tag tag-gray">2FA OTP</span> <span class="tag tag-yellow">Cron Jobs</span></p>
+      </div>
+    </div>
+
+    <div class="arch-arrow">&#9660; &nbsp; Mongoose &bull; Cross-DB Connections &nbsp; &#9660;</div>
+
+    <!-- Database Row -->
+    <div style="text-align:center;margin-bottom:8px;font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:1px;">MongoDB Databases</div>
+    <div class="arch-row">
+      <div class="arch-box db">
+        <h4>admin_db</h4>
+        <p>Sessions</p>
+      </div>
+      <div class="arch-box db">
+        <h4>applicant_db</h4>
+        <p>Users, Applications, Receipts, Premium Users</p>
+      </div>
+      <div class="arch-box db">
+        <h4>recruiter_db</h4>
+        <p>Users, Companies, Jobs, Internships, GridFS Files</p>
+      </div>
+    </div>
+
+    <!-- Cross-DB Legend -->
+    <div style="margin-top:20px; padding:16px; background:#f8f9fa; border-radius:8px; border:1px solid #e0e0e0;">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Cross-Database Read Access:</div>
+      <div style="font-size:12px;color:#666;line-height:2;">
+        <span class="tag tag-red">Admin</span> reads from <span class="tag tag-purple">recruiter_db</span> (companies, jobs, internships) + <span class="tag tag-purple">applicant_db</span> (users, premium)<br>
+        <span class="tag tag-green">Applicant</span> reads from <span class="tag tag-purple">recruiter_db</span> (jobs, internships, companies)<br>
+        <span class="tag tag-yellow">Recruiter</span> reads from <span class="tag tag-purple">applicant_db</span> (applications, premium status)
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  DATABASE MODELS                                              -->
+<!-- ============================================================ -->
+<section class="section" id="database">
+  <div class="section-title"><span class="dot" style="background:#7c3aed"></span> Database Models</div>
+  <p class="section-subtitle">All MongoDB collections and their schemas across the three databases</p>
+
+  <div class="grid-3">
+    <!-- applicant_db models -->
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3>User <span class="tag tag-green">applicant_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">userId</span><span class="field-type">String (auto)</span></div>
+        <div class="field"><span class="field-name">firstName, lastName</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">email</span><span class="field-type">String * unique</span></div>
+        <div class="field"><span class="field-name">phone</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">gender</span><span class="field-type">Enum: m/f/other</span></div>
+        <div class="field"><span class="field-name">password</span><span class="field-type">String (bcrypt)</span></div>
+        <div class="field"><span class="field-name">resumeId, profileImageId</span><span class="field-type">ObjectId (GridFS)</span></div>
+        <div class="field"><span class="field-name">collegeName, skills, about</span><span class="field-type">String</span></div>
+        <div class="field"><span class="field-name">linkedinProfile, githubProfile</span><span class="field-type">String</span></div>
+        <div class="field"><span class="field-name">otp, otpExpiry</span><span class="field-type">String, Date</span></div>
+        <div class="field"><span class="field-name">twoFactorEnabled</span><span class="field-type">Boolean (true)</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3>Applied_for_Jobs <span class="tag tag-green">applicant_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">userId</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">jobId</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">firstName, lastName, email</span><span class="field-type">String</span></div>
+        <div class="field"><span class="field-name">resumeId</span><span class="field-type">ObjectId</span></div>
+        <div class="field"><span class="field-name">isSelected</span><span class="field-type">Boolean (false)</span></div>
+        <div class="field"><span class="field-name">isRejected</span><span class="field-type">Boolean (false)</span></div>
+        <div class="field"><span class="field-name">AppliedAt</span><span class="field-type">Date</span></div>
+      </div>
+      <p style="font-size:11px;color:#888;margin-top:8px;">Compound unique index: userId + jobId</p>
+    </div>
+
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3>Applied_for_Internships <span class="tag tag-green">applicant_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">userId</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">internshipId</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">firstName, lastName, email</span><span class="field-type">String</span></div>
+        <div class="field"><span class="field-name">resumeId</span><span class="field-type">ObjectId</span></div>
+        <div class="field"><span class="field-name">isSelected, isRejected</span><span class="field-type">Boolean</span></div>
+        <div class="field"><span class="field-name">AppliedAt</span><span class="field-type">Date</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3>Premium_User <span class="tag tag-green">applicant_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">(all User fields)</span><span class="field-type">inherited</span></div>
+        <div class="field"><span class="field-name">plan</span><span class="field-type">Enum: monthly/annual</span></div>
+        <div class="field"><span class="field-name">planExpiry</span><span class="field-type">Date</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3>Receipt <span class="tag tag-green">applicant_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">userId, email</span><span class="field-type">String</span></div>
+        <div class="field"><span class="field-name">transactionId</span><span class="field-type">String unique</span></div>
+        <div class="field"><span class="field-name">amount</span><span class="field-type">Number</span></div>
+        <div class="field"><span class="field-name">subscriptionPlan</span><span class="field-type">Enum</span></div>
+        <div class="field"><span class="field-name">paymentMethod</span><span class="field-type">String (Stripe)</span></div>
+        <div class="field"><span class="field-name">paymentStatus</span><span class="field-type">Enum: Pending/Completed/Failed</span></div>
+        <div class="field"><span class="field-name">paymentDate</span><span class="field-type">Date</span></div>
+      </div>
+    </div>
+
+    <!-- recruiter_db models -->
+    <div class="card" style="border-top:3px solid #e9c46a;">
+      <h3>RecruiterUser <span class="tag tag-yellow">recruiter_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">firstName, lastName</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">email</span><span class="field-type">String * unique</span></div>
+        <div class="field"><span class="field-name">phone</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">gender</span><span class="field-type">Enum *</span></div>
+        <div class="field"><span class="field-name">password</span><span class="field-type">String (bcrypt)</span></div>
+        <div class="field"><span class="field-name">profileImage</span><span class="field-type">Buffer + contentType</span></div>
+        <div class="field"><span class="field-name">isPremium</span><span class="field-type">Boolean (false)</span></div>
+        <div class="field"><span class="field-name">otp, otpExpiry</span><span class="field-type">String, Date</span></div>
+        <div class="field"><span class="field-name">twoFactorEnabled</span><span class="field-type">Boolean (true)</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #e9c46a;">
+      <h3>Company <span class="tag tag-yellow">recruiter_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">companyName</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">website</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">location</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">logoId</span><span class="field-type">ObjectId (GridFS)</span></div>
+        <div class="field"><span class="field-name">createdBy</span><span class="field-type">ObjectId → User</span></div>
+        <div class="field"><span class="field-name">verified</span><span class="field-type">Boolean (false)</span></div>
+        <div class="field"><span class="field-name">proofDocumentId</span><span class="field-type">ObjectId (GridFS)</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #e9c46a;">
+      <h3>Job <span class="tag tag-yellow">recruiter_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">jobTitle, jobDescription</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">jobRequirements</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">jobSalary</span><span class="field-type">Number *</span></div>
+        <div class="field"><span class="field-name">jobLocation, jobType</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">jobExperience, noofPositions</span><span class="field-type">Number *</span></div>
+        <div class="field"><span class="field-name">jobCompany</span><span class="field-type">ObjectId → Company</span></div>
+        <div class="field"><span class="field-name">createdBy</span><span class="field-type">ObjectId → User</span></div>
+        <div class="field"><span class="field-name">jobExpiry</span><span class="field-type">Date (+30d default)</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid #e9c46a;">
+      <h3>Internship <span class="tag tag-yellow">recruiter_db</span></h3>
+      <div class="model-fields">
+        <div class="field"><span class="field-name">intTitle, intDescription</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">intRequirements</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">intStipend</span><span class="field-type">Number *</span></div>
+        <div class="field"><span class="field-name">intLocation</span><span class="field-type">String *</span></div>
+        <div class="field"><span class="field-name">intDuration, intExperience</span><span class="field-type">Number *</span></div>
+        <div class="field"><span class="field-name">intCompany</span><span class="field-type">ObjectId → Company</span></div>
+        <div class="field"><span class="field-name">createdBy</span><span class="field-type">ObjectId → User</span></div>
+        <div class="field"><span class="field-name">intExpiry</span><span class="field-type">Date (+30d default)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  WORKFLOW                                                     -->
+<!-- ============================================================ -->
+<section class="section" id="workflow">
+  <div class="section-title"><span class="dot" style="background:#4361ee"></span> Application Workflows</div>
+  <p class="section-subtitle">Key user journeys across all three modules</p>
+
+  <div class="grid-2">
+    <!-- Auth Flow -->
+    <div class="card">
+      <h3>Authentication Flow (All Modules)</h3>
+      <div class="flow-container">
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>1. Login / Signup</h5>
+          <p>User enters email + password</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>2. Server validates credentials</h5>
+          <p>Bcrypt compare &bull; Generate OTP &bull; Send to email</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>3. Two-Factor Authentication</h5>
+          <p>User enters OTP from email</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>4. Token / Session Created</h5>
+          <p>Admin: Session + Cookie &bull; Applicant/Recruiter: JWT in localStorage</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>5. Redirect to Dashboard</h5>
+          <p>Protected routes accessible</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Posting Flow -->
+    <div class="card">
+      <h3>Job Posting &amp; Application Flow</h3>
+      <div class="flow-container">
+        <div class="flow-step" style="border-color:#e9c46a;">
+          <h5>1. Recruiter registers company</h5>
+          <p>Upload logo + proof document → Awaiting verification</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#e63946;">
+          <h5>2. Admin verifies company</h5>
+          <p>Reviews proof document → Approves or rejects</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#e9c46a;">
+          <h5>3. Recruiter posts job/internship</h5>
+          <p>Only verified companies can post &bull; Auto-expires in 30 days</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#2a9d8f;">
+          <h5>4. Applicant browses &amp; applies</h5>
+          <p>Search, filter, apply with resume &bull; Data saved to applicant_db</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#e9c46a;">
+          <h5>5. Recruiter reviews applications</h5>
+          <p>Priority sorted (pending + premium first) &bull; Select or Reject</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#2a9d8f;">
+          <h5>6. Applicant notified via email</h5>
+          <p>EmailJS sends acceptance/rejection email</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Flow -->
+    <div class="card">
+      <h3>Premium Upgrade Flow (Applicant)</h3>
+      <div class="flow-container">
+        <div class="flow-step" style="border-color:#2a9d8f;">
+          <h5>1. Navigate to Payment page</h5>
+          <p>Choose plan: Monthly or Annual</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>2. Stripe Payment Intent created</h5>
+          <p>Server creates intent → Client renders Stripe form</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>3. Process Payment</h5>
+          <p>Stripe confirms → Server creates Premium_User + Receipt</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#2a9d8f;">
+          <h5>4. View Receipt &amp; Subscription</h5>
+          <p>Premium features unlocked &bull; Visible to admin via SOAP</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recruiter Premium Flow -->
+    <div class="card">
+      <h3>Recruiter Pro Upgrade Flow</h3>
+      <div class="flow-container">
+        <div class="flow-step" style="border-color:#e9c46a;">
+          <h5>1. Navigate to Upgrade page</h5>
+          <p>Recruiter Pro plan &bull; ₹999/month</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>2. Stripe Checkout Session</h5>
+          <p>Server creates checkout session → Redirect to Stripe</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#4361ee;">
+          <h5>3. Verify &amp; Activate</h5>
+          <p>Verify session → Set isPremium = true on RecruiterUser</p>
+        </div>
+        <div class="flow-arrow-down"></div>
+        <div class="flow-step" style="border-color:#e9c46a;">
+          <h5>4. Premium Features</h5>
+          <p>View full applicant profiles (cross-DB access)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  ADMIN BACKEND                                                -->
+<!-- ============================================================ -->
+<section class="section" id="admin-backend">
+  <div class="section-title"><span class="dot" style="background:#e63946"></span> Admin — Backend API</div>
+  <p class="section-subtitle">Express.js &bull; Port 9000 &bull; Session-based Auth &bull; express-session + MongoStore &bull; SOAP/WSDL</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#d4edda"></div> GET</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#cce5ff"></div> POST</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fff3cd"></div> PUT</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f8d7da"></div> DELETE</div>
+  </div>
+
+  <div class="card admin-accent">
+    <h3>API Endpoints</h3>
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/login</code></td><td>Admin login (hardcoded credentials)</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/verify-2fa</code></td><td>Verify 2FA OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/logout</code></td><td>Destroy session</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/auth/me</code></td><td>Get current admin user</td><td>Session</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Applicants (reads from applicant_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicants</code></td><td>List all applicants</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicants/:id</code></td><td>Get applicant by ID</td><td>Session</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/applicants/:id</code></td><td>Delete applicant</td><td>Session</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Recruiters (reads from recruiter_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiters</code></td><td>List all recruiters</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiters/:id</code></td><td>Get recruiter by ID</td><td>Session</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/recruiters/:id</code></td><td>Delete recruiter</td><td>Session</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Companies (reads from recruiter_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/companies</code></td><td>List all companies</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/companies/awaiting-verification</code></td><td>Unverified companies</td><td>Session</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/companies/verify/:id</code></td><td>Verify a company</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/companies/:id</code></td><td>Get company by ID</td><td>Session</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/companies/:id</code></td><td>Delete company</td><td>Session</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Jobs &amp; Internships (reads from recruiter_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/jobs</code></td><td>All jobs (grouped by company)</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/jobs/:id</code></td><td>Get job by ID</td><td>Session</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/jobs/:id</code></td><td>Delete job</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/internships</code></td><td>All internships (grouped by company)</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/internships/:id</code></td><td>Get internship by ID</td><td>Session</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/internships/:id</code></td><td>Delete internship</td><td>Session</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Admin Special</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/stats</code></td><td>Aggregate counts dashboard</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/admin/premium-users</code></td><td>Premium users via SOAP</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/admin/company/proof/:proofId</code></td><td>Stream proof document (GridFS)</td><td>Session</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/health</code></td><td>Health check</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card admin-accent">
+      <h3>Middleware</h3>
+      <table>
+        <tr><th>Name</th><th>Purpose</th></tr>
+        <tr><td><code>ensureAuthenticated</code></td><td>Checks req.session.user exists</td></tr>
+        <tr><td><code>isAdmin</code></td><td>Same session check for admin role</td></tr>
+        <tr><td><code>errorHandler</code></td><td>JSON error response with stack in dev</td></tr>
+      </table>
+    </div>
+    <div class="card admin-accent">
+      <h3>Special Features</h3>
+      <table>
+        <tr><th>Feature</th><th>Details</th></tr>
+        <tr><td>SOAP/WSDL</td><td>PremiumUserService.PremiumUserPort.GetPremiumUsers</td></tr>
+        <tr><td>GridFS</td><td>Streams proof documents from recruiter_db uploads bucket</td></tr>
+        <tr><td>MongoStore</td><td>Session storage in admin_db (24h cookie, 14d TTL)</td></tr>
+        <tr><td>Cross-DB</td><td>Connects to recruiter_db + applicant_db via separate connections</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  ADMIN FRONTEND                                               -->
+<!-- ============================================================ -->
+<section class="section" id="admin-frontend">
+  <div class="section-title"><span class="dot" style="background:#e63946"></span> Admin — Frontend</div>
+  <p class="section-subtitle">React + Vite &bull; Port 5173 &bull; Redux Toolkit &bull; Tailwind CSS &bull; Chart.js</p>
+
+  <div class="card admin-accent">
+    <h3>Routes &amp; Pages</h3>
+    <table>
+      <thead><tr><th>Path</th><th>Component</th><th>Auth</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>/login</code></td><td>Login</td><td>Public</td><td>Email/password → 2FA OTP verification</td></tr>
+        <tr><td><code>/</code></td><td>→ /dashboard</td><td>Redirect</td><td>Auto-redirect</td></tr>
+        <tr><td><code>/dashboard</code></td><td>Dashboard</td><td>Protected</td><td>Stats cards + Chart.js bar charts</td></tr>
+        <tr><td><code>/applicants</code></td><td>ApplicantList</td><td>Protected</td><td>Table with delete (confirm dialog)</td></tr>
+        <tr><td><code>/recruiters</code></td><td>RecruiterList</td><td>Protected</td><td>Table with delete (confirm dialog)</td></tr>
+        <tr><td><code>/companies</code></td><td>CompanyList</td><td>Protected</td><td>Table with delete + verification link</td></tr>
+        <tr><td><code>/companies/awaiting-verification</code></td><td>CompaniesAwaitingVerification</td><td>Protected</td><td>Unverified companies; verify/reject + view proof</td></tr>
+        <tr><td><code>/jobs</code></td><td>JobList</td><td>Protected</td><td>Flattened table of all jobs with delete</td></tr>
+        <tr><td><code>/internships</code></td><td>InternshipList</td><td>Protected</td><td>Flattened table of all internships with delete</td></tr>
+        <tr><td><code>/premium-users</code></td><td>PremiumUsers</td><td>Protected</td><td>SOAP-fetched premium user table</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card admin-accent">
+      <h3>State Management</h3>
+      <h4>Redux Store</h4>
+      <p style="font-size:13px;">pendingVerificationsSlice</p>
+      <div class="model-fields" style="margin-top:8px;">
+        <div class="field"><span class="field-name">count</span><span class="field-type">Number</span></div>
+        <div class="field"><span class="field-name">loading</span><span class="field-type">Boolean</span></div>
+        <div class="field"><span class="field-name">error</span><span class="field-type">String | null</span></div>
+      </div>
+      <h4>AuthContext</h4>
+      <p style="font-size:13px;">user, loading, isAuthenticated, login(), verify2FA(), logout()</p>
+    </div>
+    <div class="card admin-accent">
+      <h3>Components</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="tag tag-gray">Navbar</span>
+        <span class="tag tag-gray">Header</span>
+        <span class="tag tag-gray">Footer</span>
+        <span class="tag tag-gray">Badge</span>
+        <span class="tag tag-gray">Table</span>
+        <span class="tag tag-gray">Card</span>
+        <span class="tag tag-gray">ConfirmDialog</span>
+        <span class="tag tag-gray">ProtectedRoute</span>
+        <span class="tag tag-gray">AdminLayout</span>
+        <span class="tag tag-gray">AuthLayout</span>
+        <span class="tag tag-red">ApplicantTable</span>
+        <span class="tag tag-red">RecruiterTable</span>
+        <span class="tag tag-red">CompanyTable</span>
+        <span class="tag tag-red">JobTable</span>
+        <span class="tag tag-red">InternshipTable</span>
+        <span class="tag tag-red">PremiumUserTable</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  ADMIN WIREFRAMES                                             -->
+<!-- ============================================================ -->
+<section class="section" id="admin-wireframes">
+  <div class="section-title"><span class="dot" style="background:#e63946"></span> Admin — Page Wireframes</div>
+  <p class="section-subtitle">Visual mockups of all admin portal pages</p>
+
+  <div class="grid-2">
+    <!-- Login -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Admin Login</span>
+      </div>
+      <div class="wireframe-content" style="display:flex;justify-content:center;align-items:center;">
+        <div style="width:260px;">
+          <div style="text-align:center;font-size:18px;font-weight:800;margin-bottom:12px;">GoHire Admin</div>
+          <div class="wireframe-form-row"><div class="wireframe-input" style="width:100%"></div></div>
+          <div style="font-size:10px;color:#999;margin-bottom:4px;">Email</div>
+          <div class="wireframe-form-row"><div class="wireframe-input" style="width:100%"></div></div>
+          <div style="font-size:10px;color:#999;margin-bottom:8px;">Password</div>
+          <div class="wireframe-btn" style="width:100%;text-align:center;">Login</div>
+          <div style="text-align:center;font-size:10px;color:#999;margin-top:8px;">→ Then enter 2FA OTP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Admin Dashboard</span>
+      </div>
+      <div class="wireframe-nav">
+        <span class="active">Dashboard</span><span>Applicants</span><span>Recruiters</span><span>Companies</span><span>Jobs</span><span>Internships</span><span>Premium</span>
+      </div>
+      <div class="wireframe-content">
+        <div class="wireframe-stat-row">
+          <div class="wireframe-stat"><div class="num">152</div><div class="label">Applicants</div></div>
+          <div class="wireframe-stat"><div class="num">34</div><div class="label">Recruiters</div></div>
+          <div class="wireframe-stat"><div class="num">18</div><div class="label">Companies</div></div>
+        </div>
+        <div class="wireframe-stat-row">
+          <div class="wireframe-stat"><div class="num">67</div><div class="label">Jobs</div></div>
+          <div class="wireframe-stat"><div class="num">23</div><div class="label">Internships</div></div>
+          <div class="wireframe-stat"><div class="num">8</div><div class="label">Premium</div></div>
+        </div>
+        <div class="wireframe-placeholder">Chart.js Bar Chart — Statistics Overview</div>
+      </div>
+    </div>
+
+    <!-- Applicant List -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Applicant Management</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Dashboard</span><span class="active">Applicants</span><span>Recruiters</span><span>Companies</span><span>Jobs</span><span>Internships</span>
+      </div>
+      <div class="wireframe-content">
+        <div class="wireframe-table-mock">
+          <div class="row header"><div class="col">Name</div><div class="col">Email</div><div class="col">Phone</div><div class="col">Actions</div></div>
+          <div class="row"><div class="col">John Doe</div><div class="col">john@mail.com</div><div class="col">+91...</div><div class="col" style="color:#e63946;">Delete</div></div>
+          <div class="row"><div class="col">Jane Smith</div><div class="col">jane@mail.com</div><div class="col">+91...</div><div class="col" style="color:#e63946;">Delete</div></div>
+          <div class="row"><div class="col">...</div><div class="col">...</div><div class="col">...</div><div class="col">...</div></div>
+        </div>
+        <div style="font-size:10px;color:#999;margin-top:8px;text-align:center;">⚠ Confirm Dialog appears before delete</div>
+      </div>
+    </div>
+
+    <!-- Company Verification -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Company Verification</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Dashboard</span><span>Applicants</span><span>Recruiters</span><span class="active">Companies</span><span>Jobs</span><span>Internships</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Awaiting Verification (3)</div>
+        <div class="wireframe-table-mock">
+          <div class="row header"><div class="col">Company</div><div class="col">Website</div><div class="col">Proof</div><div class="col">Actions</div></div>
+          <div class="row"><div class="col">TechCorp</div><div class="col">techcorp.com</div><div class="col" style="color:#4361ee;">View PDF</div><div class="col"><span style="color:#2a9d8f;">✓ Verify</span> / <span style="color:#e63946;">✗ Reject</span></div></div>
+          <div class="row"><div class="col">StartupX</div><div class="col">startupx.io</div><div class="col" style="color:#4361ee;">View PDF</div><div class="col"><span style="color:#2a9d8f;">✓ Verify</span> / <span style="color:#e63946;">✗ Reject</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  APPLICANT BACKEND                                            -->
+<!-- ============================================================ -->
+<section class="section" id="applicant-backend">
+  <div class="section-title"><span class="dot" style="background:#2a9d8f"></span> Applicant — Backend API</div>
+  <p class="section-subtitle">Express.js &bull; Port 3000 &bull; JWT Auth &bull; Stripe Payments &bull; Fuse.js Fuzzy Search &bull; GridFS File Storage</p>
+
+  <div class="card applicant-accent">
+    <h3>API Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+      <tbody>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Authentication</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/signup</code></td><td>Register new user</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/login</code></td><td>Login (with 2FA)</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/verify-2fa</code></td><td>Verify 2FA OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/logout</code></td><td>Logout</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/auth/me</code></td><td>Get current user</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/forgot-password</code></td><td>Send forgot password OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/verify-otp</code></td><td>Verify OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/reset-password</code></td><td>Reset password</td><td>—</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Jobs &amp; Internships (reads from recruiter_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/jobs</code></td><td>Paginated jobs with filters</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/internships</code></td><td>Paginated internships with filters</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/companies</code></td><td>Verified companies list</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applicant/jobs/filter</code></td><td>Filter jobs by salary/experience</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applicant/internships/filter</code></td><td>Filter internships by duration</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/jobs/:jobId</code></td><td>Get job details</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/internships/:id</code></td><td>Get internship details</td><td>—</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Applications</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applicant/jobs/:jobId/apply</code></td><td>Apply for job</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applicant/internships/:id/apply</code></td><td>Apply for internship</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/applied-jobs</code></td><td>List applied jobs</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/applied-internships</code></td><td>List applied internships</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/dashboard/stats</code></td><td>Dashboard statistics</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Profile</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/profile</code></td><td>Full profile + application history</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td><code>/api/profile</code></td><td>Update profile</td><td>JWT</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/profile</code></td><td>Delete account</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/profile/resume</code></td><td>Upload resume (PDF, 5MB)</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/profile/resume</code></td><td>Download resume</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/profile/image</code></td><td>Upload profile image (2MB)</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/profile/image</code></td><td>Get profile image</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Payments (Stripe)</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/payment/create-payment-intent</code></td><td>Create Stripe payment intent</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/payment/process-payment</code></td><td>Process payment → Premium_User + Receipt</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/payment/receipt</code></td><td>Get payment receipt</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/payment/subscription</code></td><td>Get subscription info</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Search</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/search</code></td><td>Fuzzy search jobs &amp; internships (Fuse.js)</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card applicant-accent">
+      <h3>Middleware</h3>
+      <table>
+        <tr><th>Name</th><th>Purpose</th></tr>
+        <tr><td><code>requireAuth</code></td><td>JWT Bearer token verification → req.user</td></tr>
+        <tr><td><code>requireAuthRedirect</code></td><td>Same but redirects to /login on fail</td></tr>
+        <tr><td><code>resumeUpload</code></td><td>Multer: PDF only, 5MB limit</td></tr>
+        <tr><td><code>profileImageUpload</code></td><td>Multer: images only, 2MB limit</td></tr>
+        <tr><td><code>errorHandler</code></td><td>Express error handler (JSON)</td></tr>
+      </table>
+    </div>
+    <div class="card applicant-accent">
+      <h3>Special Features</h3>
+      <table>
+        <tr><th>Feature</th><th>Details</th></tr>
+        <tr><td>Fuse.js</td><td>Fuzzy search across jobs + internships titles, descriptions, locations</td></tr>
+        <tr><td>Stripe</td><td>Payment intents for premium membership (Monthly/Annual)</td></tr>
+        <tr><td>GridFS</td><td>Resume + profile image storage in MongoDB</td></tr>
+        <tr><td>Morgan</td><td>HTTP logging to console + file</td></tr>
+        <tr><td>2FA</td><td>Email OTP via email service for login/forgot password</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  APPLICANT FRONTEND                                           -->
+<!-- ============================================================ -->
+<section class="section" id="applicant-frontend">
+  <div class="section-title"><span class="dot" style="background:#2a9d8f"></span> Applicant — Frontend</div>
+  <p class="section-subtitle">React + Vite &bull; Port 5174 &bull; Redux Toolkit &bull; Tailwind CSS &bull; ErrorBoundary &bull; Toast Notifications</p>
+
+  <div class="card applicant-accent">
+    <h3>Routes &amp; Pages</h3>
+    <table>
+      <thead><tr><th>Path</th><th>Component</th><th>Auth</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Public Pages</td></tr>
+        <tr><td><code>/</code></td><td>Home</td><td>Public</td><td>Landing page</td></tr>
+        <tr><td><code>/login</code></td><td>Login</td><td>Public</td><td>Email/password + 2FA OTP</td></tr>
+        <tr><td><code>/signup</code></td><td>Signup</td><td>Public</td><td>Registration form</td></tr>
+        <tr><td><code>/forgot-password</code></td><td>ForgotPassword</td><td>Public</td><td>3-step password reset</td></tr>
+        <tr><td><code>/jobs</code></td><td>Jobs</td><td>Public</td><td>Browse paginated jobs with filters</td></tr>
+        <tr><td><code>/internships</code></td><td>Internships</td><td>Public</td><td>Browse paginated internships with filters</td></tr>
+        <tr><td><code>/companies</code></td><td>Companies</td><td>Public</td><td>Browse verified companies</td></tr>
+        <tr><td><code>/search</code></td><td>SearchResults</td><td>Public</td><td>Fuzzy search results</td></tr>
+        <tr><td><code>/payment</code></td><td>Payment</td><td>Public</td><td>Stripe payment form</td></tr>
+        <tr><td><code>/terms</code></td><td>Terms</td><td>Public</td><td>Terms of service</td></tr>
+        <tr><td><code>/privacy</code></td><td>Privacy</td><td>Public</td><td>Privacy policy</td></tr>
+        <tr><td><code>/contact</code></td><td>ContactUs</td><td>Public</td><td>Contact form</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Protected Pages</td></tr>
+        <tr><td><code>/dashboard</code></td><td>Dashboard</td><td>JWT</td><td>User stats dashboard</td></tr>
+        <tr><td><code>/profile</code></td><td>Profile</td><td>JWT</td><td>View profile + application history</td></tr>
+        <tr><td><code>/profile/edit</code></td><td>EditProfile</td><td>JWT</td><td>Edit profile fields</td></tr>
+        <tr><td><code>/applied-jobs</code></td><td>AppliedJobs</td><td>JWT</td><td>List of applied jobs with status</td></tr>
+        <tr><td><code>/applied-internships</code></td><td>AppliedInternships</td><td>JWT</td><td>List of applied internships with status</td></tr>
+        <tr><td><code>/jobs/:jobId/apply</code></td><td>ApplyJob</td><td>JWT</td><td>Apply for specific job</td></tr>
+        <tr><td><code>/internships/:id/apply</code></td><td>ApplyInternship</td><td>JWT</td><td>Apply for specific internship</td></tr>
+        <tr><td><code>/subscription</code></td><td>Subscription</td><td>JWT</td><td>View subscription status</td></tr>
+        <tr><td><code>/receipt</code></td><td>Receipt</td><td>JWT</td><td>View payment receipt</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card applicant-accent">
+      <h3>State Management</h3>
+      <h4>Redux Store</h4>
+      <p style="font-size:13px;">forgotPasswordSlice — tracks email, otp, step, loading, error, otpVerified</p>
+      <h4>AuthContext</h4>
+      <p style="font-size:13px;">user, loading, isAuthenticated, login(), verify2FA(), signup(), logout(), checkAuth()</p>
+      <p style="font-size:12px;color:#666;margin-top:4px;">JWT stored in localStorage</p>
+      <h4>ToastContext</h4>
+      <p style="font-size:13px;">showToast(message, type) — auto-dismiss notifications</p>
+      <h4>Custom Hooks</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+        <span class="tag tag-green">useAuth</span>
+        <span class="tag tag-green">useDebounce</span>
+        <span class="tag tag-green">usePagination</span>
+        <span class="tag tag-green">useUpload</span>
+      </div>
+    </div>
+    <div class="card applicant-accent">
+      <h3>Components</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="tag tag-gray">Header</span>
+        <span class="tag tag-gray">Footer</span>
+        <span class="tag tag-gray">Navbar</span>
+        <span class="tag tag-gray">Sidebar</span>
+        <span class="tag tag-gray">PageHeader</span>
+        <span class="tag tag-gray">SearchBar</span>
+        <span class="tag tag-gray">Pagination</span>
+        <span class="tag tag-gray">Badge</span>
+        <span class="tag tag-gray">Card</span>
+        <span class="tag tag-gray">Table</span>
+        <span class="tag tag-gray">Modal</span>
+        <span class="tag tag-gray">EmptyState</span>
+        <span class="tag tag-gray">ErrorBoundary</span>
+        <span class="tag tag-gray">ProtectedRoute</span>
+        <span class="tag tag-green">JobCard</span>
+        <span class="tag tag-green">JobFilters</span>
+        <span class="tag tag-green">InternshipCard</span>
+        <span class="tag tag-green">InternshipFilters</span>
+        <span class="tag tag-green">CompanyCard</span>
+        <span class="tag tag-green">ProfileForm</span>
+        <span class="tag tag-green">ResumeUploader</span>
+        <span class="tag tag-green">CheckoutForm</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  APPLICANT WIREFRAMES                                         -->
+<!-- ============================================================ -->
+<section class="section" id="applicant-wireframes">
+  <div class="section-title"><span class="dot" style="background:#2a9d8f"></span> Applicant — Page Wireframes</div>
+  <p class="section-subtitle">Visual mockups of key applicant portal pages</p>
+
+  <div class="grid-2">
+    <!-- Home -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Home / Landing</span>
+      </div>
+      <div class="wireframe-nav">
+        <span class="active">Home</span><span>Jobs</span><span>Internships</span><span>Companies</span><span>Login</span><span>Signup</span>
+      </div>
+      <div class="wireframe-content">
+        <div class="wireframe-placeholder" style="height:60px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#666;">Hero Section — Find Your Dream Job</div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <div class="wireframe-input" style="flex:3;height:32px;"></div>
+          <div class="wireframe-btn">Search</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <div class="wireframe-placeholder" style="flex:1;">Featured Jobs</div>
+          <div class="wireframe-placeholder" style="flex:1;">Top Companies</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jobs Browse -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Browse Jobs</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Home</span><span class="active">Jobs</span><span>Internships</span><span>Companies</span>
+      </div>
+      <div class="wireframe-sidebar">
+        <div class="wireframe-sidebar-left">
+          <div style="font-size:11px;font-weight:700;margin-bottom:4px;">Filters</div>
+          <span>Salary Range</span>
+          <span>Experience</span>
+          <span>Location</span>
+          <span>Job Type</span>
+          <div class="wireframe-btn" style="margin-top:8px;text-align:center;">Apply</div>
+        </div>
+        <div class="wireframe-sidebar-right">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="border:1px solid #e0e0e0;border-radius:6px;padding:8px;">
+              <div style="font-size:12px;font-weight:700;">Software Engineer</div>
+              <div style="font-size:10px;color:#666;">TechCorp &bull; Mumbai &bull; ₹8-12 LPA</div>
+              <div class="wireframe-btn" style="margin-top:4px;font-size:10px;">Apply Now</div>
+            </div>
+            <div style="border:1px solid #e0e0e0;border-radius:6px;padding:8px;">
+              <div style="font-size:12px;font-weight:700;">Frontend Developer</div>
+              <div style="font-size:10px;color:#666;">StartupX &bull; Bangalore &bull; ₹6-10 LPA</div>
+              <div class="wireframe-btn" style="margin-top:4px;font-size:10px;">Apply Now</div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:10px;font-size:11px;color:#999;">1 2 3 ... 10 (Pagination)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Applicant Dashboard</span>
+      </div>
+      <div class="wireframe-nav">
+        <span class="active">Dashboard</span><span>Applied Jobs</span><span>Applied Internships</span><span>Profile</span>
+      </div>
+      <div class="wireframe-content">
+        <div class="wireframe-stat-row">
+          <div class="wireframe-stat"><div class="num">5</div><div class="label">Jobs Applied</div></div>
+          <div class="wireframe-stat"><div class="num">3</div><div class="label">Internships Applied</div></div>
+          <div class="wireframe-stat"><div class="num">2</div><div class="label">Selected</div></div>
+          <div class="wireframe-stat"><div class="num">1</div><div class="label">Pending</div></div>
+        </div>
+        <div class="wireframe-placeholder">Recent Applications</div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>User Profile</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Dashboard</span><span>Applied Jobs</span><span>Applied Internships</span><span class="active">Profile</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="display:flex;gap:16px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:#e0e0e0;"></div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">John Doe</div>
+            <div style="font-size:11px;color:#666;">john@email.com &bull; +91-9876543210</div>
+            <div style="font-size:11px;color:#666;">ABC College &bull; Member since Jan 2026</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <div class="wireframe-btn">Edit Profile</div>
+          <div class="wireframe-btn" style="background:#2a9d8f;">Upload Resume</div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:4px;">Skills &amp; Links</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="tag tag-green">React</span>
+            <span class="tag tag-green">Node.js</span>
+            <span class="tag tag-green">MongoDB</span>
+          </div>
+          <div style="font-size:10px;color:#666;margin-top:4px;">LinkedIn &bull; GitHub &bull; Portfolio</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Premium Payment</span>
+      </div>
+      <div class="wireframe-content" style="display:flex;justify-content:center;">
+        <div style="width:280px;">
+          <div style="text-align:center;font-size:16px;font-weight:800;margin-bottom:12px;">Go Premium</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <div style="flex:1;border:2px solid #4361ee;border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:12px;font-weight:700;">Monthly</div>
+              <div style="font-size:16px;font-weight:800;">₹299</div>
+            </div>
+            <div style="flex:1;border:2px solid #e0e0e0;border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:12px;font-weight:700;">Annual</div>
+              <div style="font-size:16px;font-weight:800;">₹2999</div>
+            </div>
+          </div>
+          <div class="wireframe-placeholder">Stripe Card Element</div>
+          <div class="wireframe-btn" style="width:100%;text-align:center;margin-top:8px;">Pay Now</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Search Results</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Home</span><span>Jobs</span><span>Internships</span><span>Companies</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div class="wireframe-input" style="flex:3;height:32px;"></div>
+          <div class="wireframe-btn">Search</div>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Results for "React Developer" (Fuse.js fuzzy match)</div>
+        <div class="wireframe-table-mock">
+          <div class="row header"><div class="col">Type</div><div class="col">Title</div><div class="col">Company</div><div class="col">Location</div></div>
+          <div class="row"><div class="col"><span class="tag tag-blue">Job</span></div><div class="col">React Developer</div><div class="col">TechCorp</div><div class="col">Mumbai</div></div>
+          <div class="row"><div class="col"><span class="tag tag-green">Intern</span></div><div class="col">React Intern</div><div class="col">StartupX</div><div class="col">Remote</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  RECRUITER BACKEND                                            -->
+<!-- ============================================================ -->
+<section class="section" id="recruiter-backend">
+  <div class="section-title"><span class="dot" style="background:#e9c46a"></span> Recruiter — Backend API</div>
+  <p class="section-subtitle">Express.js &bull; Port 5000 &bull; JWT Auth &bull; Stripe Checkout &bull; Cron Jobs &bull; EmailJS &bull; GridFS</p>
+
+  <div class="card recruiter-accent">
+    <h3>API Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+      <tbody>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Authentication &amp; Profile</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/signup</code></td><td>Register recruiter</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/login</code></td><td>Login (with 2FA)</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/verify-2fa</code></td><td>Verify 2FA OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/logout</code></td><td>Logout</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/auth/check-session</code></td><td>Validate JWT session</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/auth/user/profile</code></td><td>Get recruiter profile</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td><code>/api/auth/user/profile</code></td><td>Update recruiter profile</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/user/profile-image</code></td><td>Upload profile image</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/forgot-password</code></td><td>Send forgot password OTP</td><td>—</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/auth/change-password</code></td><td>Change password</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Companies</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/companies</code></td><td>Get recruiter's companies</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/recruiter/add-company</code></td><td>Add company (logo + proof upload)</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/edit-company/:id</code></td><td>Get company for editing</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/recruiter/edit-company/:id</code></td><td>Update company</td><td>JWT</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/recruiter/delete-company/:id</code></td><td>Delete company</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Jobs</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/jobs</code></td><td>Get recruiter's jobs</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/recruiter/add-job</code></td><td>Add job (verified company required)</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/edit-job/:id</code></td><td>Get job for editing</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td><code>/api/recruiter/edit-job/:id</code></td><td>Update job</td><td>JWT</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/recruiter/delete-job/:id</code></td><td>Delete job</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Internships</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/internships</code></td><td>Get recruiter's internships</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/recruiter/add-internship</code></td><td>Add internship</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td><code>/api/recruiter/edit-internship/:id</code></td><td>Update internship</td><td>JWT</td></tr>
+        <tr><td><span class="method delete">DEL</span></td><td><code>/api/recruiter/delete-intern/:id</code></td><td>Delete internship</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Applications (reads from applicant_db)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applications/:jobId</code></td><td>Job applicants (priority sorted)</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applications/:jobId/select/:appId</code></td><td>Select applicant (sends email)</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/applications/:jobId/reject/:appId</code></td><td>Reject applicant (sends email)</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/internapplicants/:intId</code></td><td>Internship applicants</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/internapplicants/:intId/select/:appId</code></td><td>Select intern</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/internapplicants/:intId/reject/:appId</code></td><td>Reject intern</td><td>JWT</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Premium &amp; Applicant Details</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/upgrade/create-checkout-session</code></td><td>Stripe checkout session</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/upgrade/verify-session</code></td><td>Verify &amp; activate premium</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/applicant/details/:appId</code></td><td>Full applicant details (premium only)</td><td>JWT+Premium</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">File Serving</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/recruiter/logo/:id</code></td><td>Stream company logo (GridFS)</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/recruiter/proof/:id</code></td><td>Stream proof document (GridFS)</td><td>—</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/recruiter/home/statistics</code></td><td>Dashboard statistics</td><td>JWT</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card recruiter-accent">
+      <h3>Middleware</h3>
+      <table>
+        <tr><th>Name</th><th>Purpose</th></tr>
+        <tr><td><code>requireAuth</code></td><td>JWT verify → loads user from DB → req.user, req.userId</td></tr>
+        <tr><td><code>upload</code></td><td>Multer: images only, 5MB</td></tr>
+        <tr><td><code>logoUpload</code></td><td>Multer: images + PDF, 5MB (logo + proof)</td></tr>
+        <tr><td><code>notFound</code></td><td>Custom styled 404 HTML page</td></tr>
+        <tr><td><code>errorHandler</code></td><td>Custom styled error HTML page</td></tr>
+      </table>
+    </div>
+    <div class="card recruiter-accent">
+      <h3>Cron Jobs &amp; Special Features</h3>
+      <table>
+        <tr><th>Feature</th><th>Details</th></tr>
+        <tr><td>Cron: Job Cleanup</td><td>Daily midnight — deletes jobs past jobExpiry</td></tr>
+        <tr><td>Cron: Internship Cleanup</td><td>Daily midnight — deletes internships past intExpiry</td></tr>
+        <tr><td>Priority Sort</td><td>Applications sorted: pending + premium first</td></tr>
+        <tr><td>EmailJS</td><td>Sends acceptance/rejection emails to applicants</td></tr>
+        <tr><td>Stripe Checkout</td><td>Recruiter Pro plan ₹999/month</td></tr>
+        <tr><td>Cross-DB</td><td>Reads applicant_db for applications &amp; premium status</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  RECRUITER FRONTEND                                           -->
+<!-- ============================================================ -->
+<section class="section" id="recruiter-frontend">
+  <div class="section-title"><span class="dot" style="background:#e9c46a"></span> Recruiter — Frontend</div>
+  <p class="section-subtitle">React + Vite &bull; Port 5175 &bull; Redux Toolkit &bull; Tailwind CSS</p>
+
+  <div class="card recruiter-accent">
+    <h3>Routes &amp; Pages</h3>
+    <table>
+      <thead><tr><th>Path</th><th>Component</th><th>Auth</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Public Pages</td></tr>
+        <tr><td><code>/login</code></td><td>Login</td><td>Public</td><td>Email/password + 2FA OTP</td></tr>
+        <tr><td><code>/signup</code></td><td>Signup</td><td>Public</td><td>Registration form</td></tr>
+        <tr><td><code>/forgot-password</code></td><td>ForgotPassword</td><td>Public</td><td>3-step password reset</td></tr>
+        <tr><td><code>/terms</code></td><td>Terms</td><td>Public</td><td>Terms of service</td></tr>
+        <tr><td><code>/privacy</code></td><td>Privacy</td><td>Public</td><td>Privacy policy</td></tr>
+        <tr style="background:#f8f9fa"><td colspan="4" style="font-weight:700;color:#444;">Protected Pages</td></tr>
+        <tr><td><code>/dashboard</code></td><td>Dashboard</td><td>JWT</td><td>Stats: companies, jobs, internships</td></tr>
+        <tr><td><code>/companies</code></td><td>Companies</td><td>JWT</td><td>List recruiter's companies</td></tr>
+        <tr><td><code>/companies/add</code></td><td>AddCompany</td><td>JWT</td><td>Form: name, website, location, logo, proof</td></tr>
+        <tr><td><code>/companies/edit/:id</code></td><td>EditCompany</td><td>JWT</td><td>Edit company info</td></tr>
+        <tr><td><code>/jobs</code></td><td>Jobs</td><td>JWT</td><td>List recruiter's jobs</td></tr>
+        <tr><td><code>/jobs/add</code></td><td>AddJob</td><td>JWT</td><td>Full job form (requires verified company)</td></tr>
+        <tr><td><code>/jobs/edit/:id</code></td><td>EditJob</td><td>JWT</td><td>Edit job details</td></tr>
+        <tr><td><code>/jobs/:jobId/applications</code></td><td>Applications</td><td>JWT</td><td>View applicants; select/reject</td></tr>
+        <tr><td><code>/applicant/:applicantId</code></td><td>ApplicantProfile</td><td>JWT</td><td>Full applicant profile (premium only)</td></tr>
+        <tr><td><code>/internships</code></td><td>Internships</td><td>JWT</td><td>List recruiter's internships</td></tr>
+        <tr><td><code>/internships/add</code></td><td>AddInternship</td><td>JWT</td><td>Full internship form</td></tr>
+        <tr><td><code>/internships/edit/:id</code></td><td>EditInternship</td><td>JWT</td><td>Edit internship details</td></tr>
+        <tr><td><code>/internships/:id/applications</code></td><td>InternshipApplications</td><td>JWT</td><td>View intern applicants; select/reject</td></tr>
+        <tr><td><code>/profile</code></td><td>Profile</td><td>JWT</td><td>View recruiter profile</td></tr>
+        <tr><td><code>/profile/edit</code></td><td>EditProfile</td><td>JWT</td><td>Edit name, phone, gender, image</td></tr>
+        <tr><td><code>/profile/change-password</code></td><td>ChangePassword</td><td>JWT</td><td>Change password form</td></tr>
+        <tr><td><code>/upgrade</code></td><td>Upgrade</td><td>JWT</td><td>Stripe checkout for Recruiter Pro</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card recruiter-accent">
+      <h3>State Management</h3>
+      <h4>Redux Store</h4>
+      <p style="font-size:13px;">forgotPasswordSlice — tracks email, otp, step, loading, error, otpVerified</p>
+      <h4>AuthContext</h4>
+      <p style="font-size:13px;">user, loading, isAuthenticated, login(), verify2FA(), signup(), logout(), checkAuth()</p>
+      <p style="font-size:12px;color:#666;margin-top:4px;">JWT stored as "recruiter_token" in localStorage</p>
+      <h4>Custom Hooks</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+        <span class="tag tag-yellow">useAuth</span>
+        <span class="tag tag-yellow">useDebounce</span>
+        <span class="tag tag-yellow">usePagination</span>
+        <span class="tag tag-yellow">useFormPersist</span>
+      </div>
+    </div>
+    <div class="card recruiter-accent">
+      <h3>Components</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="tag tag-gray">Header</span>
+        <span class="tag tag-gray">Footer</span>
+        <span class="tag tag-gray">Navbar</span>
+        <span class="tag tag-gray">Sidebar</span>
+        <span class="tag tag-gray">SearchBar</span>
+        <span class="tag tag-gray">Pagination</span>
+        <span class="tag tag-gray">Badge</span>
+        <span class="tag tag-gray">Card</span>
+        <span class="tag tag-gray">Table</span>
+        <span class="tag tag-gray">Modal</span>
+        <span class="tag tag-gray">EmptyState</span>
+        <span class="tag tag-gray">ProtectedRoute</span>
+        <span class="tag tag-gray">MainLayout</span>
+        <span class="tag tag-gray">AuthLayout</span>
+        <span class="tag tag-yellow">CompanyCard</span>
+        <span class="tag tag-yellow">CompanyForm</span>
+        <span class="tag tag-yellow">JobCard</span>
+        <span class="tag tag-yellow">JobForm</span>
+        <span class="tag tag-yellow">InternshipCard</span>
+        <span class="tag tag-yellow">InternshipForm</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  RECRUITER WIREFRAMES                                         -->
+<!-- ============================================================ -->
+<section class="section" id="recruiter-wireframes">
+  <div class="section-title"><span class="dot" style="background:#e9c46a"></span> Recruiter — Page Wireframes</div>
+  <p class="section-subtitle">Visual mockups of key recruiter portal pages</p>
+
+  <div class="grid-2">
+    <!-- Dashboard -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Recruiter Dashboard</span>
+      </div>
+      <div class="wireframe-nav">
+        <span class="active">Dashboard</span><span>Companies</span><span>Jobs</span><span>Internships</span><span>Profile</span><span>Upgrade</span>
+      </div>
+      <div class="wireframe-content">
+        <div class="wireframe-stat-row">
+          <div class="wireframe-stat"><div class="num">4</div><div class="label">Companies</div></div>
+          <div class="wireframe-stat"><div class="num">12</div><div class="label">Jobs Posted</div></div>
+          <div class="wireframe-stat"><div class="num">8</div><div class="label">Internships</div></div>
+        </div>
+        <div class="wireframe-placeholder">Recent Activity / Quick Actions</div>
+      </div>
+    </div>
+
+    <!-- Companies -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>My Companies</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Dashboard</span><span class="active">Companies</span><span>Jobs</span><span>Internships</span><span>Profile</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;">My Companies</div>
+          <div class="wireframe-btn">+ Add Company</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:10px;">
+            <div style="width:40px;height:40px;background:#e0e0e0;border-radius:6px;margin-bottom:6px;"></div>
+            <div style="font-size:12px;font-weight:700;">TechCorp</div>
+            <div style="font-size:10px;color:#666;">Mumbai</div>
+            <span class="tag tag-green" style="margin-top:4px;">Verified</span>
+          </div>
+          <div style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:10px;">
+            <div style="width:40px;height:40px;background:#e0e0e0;border-radius:6px;margin-bottom:6px;"></div>
+            <div style="font-size:12px;font-weight:700;">StartupX</div>
+            <div style="font-size:10px;color:#666;">Bangalore</div>
+            <span class="tag tag-yellow" style="margin-top:4px;">Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Company -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Add Company</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Register New Company</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Company Name</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Website URL</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Location</div>
+        <div class="wireframe-form-row">
+          <div class="wireframe-placeholder" style="flex:1;margin:0;">Upload Logo (Image)</div>
+          <div class="wireframe-placeholder" style="flex:1;margin:0;">Upload Proof (PDF)</div>
+        </div>
+        <div class="wireframe-btn" style="margin-top:10px;">Submit for Verification</div>
+      </div>
+    </div>
+
+    <!-- Add Job -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Post New Job</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Post a Job</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Job Title &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Select Company (verified only)</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Job Description</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div><div class="wireframe-input"></div><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Salary &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Location &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Type (FT/PT)</div>
+        <div class="wireframe-form-row"><div class="wireframe-input"></div><div class="wireframe-input"></div><div class="wireframe-input"></div></div>
+        <div style="font-size:10px;color:#999;margin-bottom:6px;">Experience &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Positions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expiry Date</div>
+        <div class="wireframe-btn" style="margin-top:8px;">Post Job</div>
+      </div>
+    </div>
+
+    <!-- Applications -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Job Applications</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Applications for: Software Engineer</div>
+        <div style="font-size:10px;color:#999;margin-bottom:10px;">Sorted by: Pending first, Premium applicants prioritized</div>
+        <div class="wireframe-table-mock">
+          <div class="row header"><div class="col">Name</div><div class="col">Email</div><div class="col">Status</div><div class="col">Resume</div><div class="col">Actions</div></div>
+          <div class="row"><div class="col">John Doe <span class="tag tag-purple" style="font-size:9px;">PRO</span></div><div class="col">john@mail.com</div><div class="col"><span class="tag tag-yellow">Pending</span></div><div class="col" style="color:#4361ee;">Download</div><div class="col"><span style="color:#2a9d8f;">Select</span> | <span style="color:#e63946;">Reject</span></div></div>
+          <div class="row"><div class="col">Jane Smith</div><div class="col">jane@mail.com</div><div class="col"><span class="tag tag-green">Selected</span></div><div class="col" style="color:#4361ee;">Download</div><div class="col" style="color:#999;">—</div></div>
+          <div class="row"><div class="col">Bob Wilson</div><div class="col">bob@mail.com</div><div class="col"><span class="tag tag-red">Rejected</span></div><div class="col" style="color:#4361ee;">Download</div><div class="col" style="color:#999;">—</div></div>
+        </div>
+        <div style="font-size:10px;color:#999;margin-top:8px;">Selection/Rejection sends email notification via EmailJS</div>
+      </div>
+    </div>
+
+    <!-- Upgrade -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Recruiter Pro Upgrade</span>
+      </div>
+      <div class="wireframe-content" style="display:flex;justify-content:center;align-items:center;">
+        <div style="width:260px;text-align:center;">
+          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Recruiter Pro</div>
+          <div style="font-size:12px;color:#666;margin-bottom:12px;">View full applicant profiles &amp; detailed info</div>
+          <div style="border:2px solid #e9c46a;border-radius:10px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:28px;font-weight:800;">₹999</div>
+            <div style="font-size:12px;color:#666;">/month</div>
+          </div>
+          <div style="text-align:left;font-size:11px;color:#666;margin-bottom:12px;">
+            ✓ View applicant details (cross-DB)<br>
+            ✓ Priority listing in results<br>
+            ✓ Download applicant resumes<br>
+            ✓ View profile images
+          </div>
+          <div class="wireframe-btn" style="width:100%;background:#e9c46a;color:#1a1a2e;">Checkout with Stripe</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Recruiter Profile</span>
+      </div>
+      <div class="wireframe-nav">
+        <span>Dashboard</span><span>Companies</span><span>Jobs</span><span>Internships</span><span class="active">Profile</span>
+      </div>
+      <div class="wireframe-content">
+        <div style="display:flex;gap:16px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:#e0e0e0;"></div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">Recruiter Name</div>
+            <div style="font-size:11px;color:#666;">recruiter@company.com &bull; +91-9876543210</div>
+            <div style="font-size:11px;color:#666;">Gender: Male &bull; <span class="tag tag-purple" style="font-size:9px;">PRO</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <div class="wireframe-btn">Edit Profile</div>
+          <div class="wireframe-btn" style="background:#666;">Change Password</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div class="wireframe-page">
+      <div class="wireframe-topbar">
+        <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+        <span>Recruiter Login</span>
+      </div>
+      <div class="wireframe-content" style="display:flex;justify-content:center;align-items:center;">
+        <div style="width:260px;">
+          <div style="text-align:center;font-size:18px;font-weight:800;margin-bottom:12px;">Recruiter Portal</div>
+          <div class="wireframe-form-row"><div class="wireframe-input" style="width:100%"></div></div>
+          <div style="font-size:10px;color:#999;margin-bottom:4px;">Email</div>
+          <div class="wireframe-form-row"><div class="wireframe-input" style="width:100%"></div></div>
+          <div style="font-size:10px;color:#999;margin-bottom:8px;">Password</div>
+          <div class="wireframe-btn" style="width:100%;text-align:center;">Login</div>
+          <div style="text-align:center;font-size:10px;color:#999;margin-top:8px;">
+            Don't have an account? <span style="color:#4361ee;">Sign Up</span><br>
+            <span style="color:#4361ee;">Forgot Password?</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  TECH STACK SUMMARY                                           -->
+<!-- ============================================================ -->
+<section class="section">
+  <div class="section-title"><span class="dot" style="background:#4361ee"></span> Technology Stack Summary</div>
+
+  <div class="grid-4">
+    <div class="card" style="border-top:3px solid #4361ee;">
+      <h3 style="font-size:14px;">Frontend</h3>
+      <div style="font-size:12px;line-height:2;">
+        React 18<br>Vite (build tool)<br>Tailwind CSS<br>Redux Toolkit<br>React Router v6<br>Axios (HTTP client)<br>Chart.js (admin charts)<br>Stripe.js (payments)
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid #2a9d8f;">
+      <h3 style="font-size:14px;">Backend</h3>
+      <div style="font-size:12px;line-height:2;">
+        Express.js<br>Mongoose (MongoDB ODM)<br>JSON Web Tokens<br>express-session<br>bcrypt (password hashing)<br>Multer (file upload)<br>Morgan (HTTP logging)<br>node-cron (scheduled jobs)
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid #7c3aed;">
+      <h3 style="font-size:14px;">Database &amp; Storage</h3>
+      <div style="font-size:12px;line-height:2;">
+        MongoDB<br>GridFS (file storage)<br>MongoStore (sessions)<br>3 separate databases<br>Cross-DB connections<br>Dynamic model registration
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid #e63946;">
+      <h3 style="font-size:14px;">Services &amp; Infra</h3>
+      <div style="font-size:12px;line-height:2;">
+        Stripe (payments)<br>SOAP/WSDL (admin)<br>EmailJS (notifications)<br>Fuse.js (fuzzy search)<br>2FA via Email OTP<br>CORS multi-origin<br>Error Boundaries
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--  PORT SUMMARY TABLE                                           -->
+<!-- ============================================================ -->
+<section class="section">
+  <div class="section-title"><span class="dot" style="background:#4361ee"></span> Server Port Map</div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Module</th><th>Backend Port</th><th>Frontend Port</th><th>Auth Type</th><th>Database</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-red">Admin</span></td>
+          <td><span class="port-badge" style="background:#fef2f2;color:#e63946;">:9000</span></td>
+          <td><span class="port-badge" style="background:#fef2f2;color:#e63946;">:5173</span></td>
+          <td>Session + MongoStore + 2FA</td>
+          <td>admin_db + reads recruiter_db, applicant_db</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-green">Applicant</span></td>
+          <td><span class="port-badge" style="background:#f0fdf4;color:#2a9d8f;">:3000</span></td>
+          <td><span class="port-badge" style="background:#f0fdf4;color:#2a9d8f;">:5174</span></td>
+          <td>JWT + Bearer Token + 2FA</td>
+          <td>applicant_db + reads recruiter_db</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-yellow">Recruiter</span></td>
+          <td><span class="port-badge" style="background:#fefce8;color:#92400e;">:5000</span></td>
+          <td><span class="port-badge" style="background:#fefce8;color:#92400e;">:5175</span></td>
+          <td>JWT + Bearer Token + 2FA</td>
+          <td>recruiter_db + reads applicant_db</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+
+<!-- ============================================================ -->
+<!--  FOOTER                                                       -->
+<!-- ============================================================ -->
+<footer class="main-footer">
+  GoHire — Full-Stack Job &amp; Internship Portal &bull; Architecture Wireframe Document &bull; 6 Servers (3 Backend + 3 Frontend) &bull; 3 MongoDB Databases
+</footer>
+
+</body>
+</html>
