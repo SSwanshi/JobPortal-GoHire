@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const swaggerUi = require('swagger-ui-express');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -56,6 +57,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to database
 connectDB();
+
+// Swagger (OpenAPI) docs (spec lives outside backend folder)
+// URL: /api/docs and /api/docs.json
+// Spec file: applicant/swagger/openapi.js
+// eslint-disable-next-line global-require
+const openapiSpec = require('../swagger/openapi');
+app.get('/api/docs.json', (req, res) => res.json(openapiSpec));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: true }));
 
 // Health check
 app.get('/api/health', (req, res) => {

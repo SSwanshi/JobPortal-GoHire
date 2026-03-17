@@ -29,6 +29,7 @@
     "path": "^0.12.7",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
+    "swagger-ui-express": "^5.0.1",
     "stripe": "^20.3.0"
   },
   "devDependencies": {
