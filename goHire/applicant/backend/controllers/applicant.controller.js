@@ -17,26 +17,80 @@ const getJobs = async (req, res) => {
     const JobFindConn = createJobModel(recruiterConn);
 
     let { salaryMin, expMin, expMax, page, location } = req.query;
-    page = parseInt(page) || 1;
-    console.log(location);
+
+    // -------- VALIDATION --------
+    page = parseInt(page);
+    if (isNaN(page) || page < 1) page = 1;
+
+    if (salaryMin !== undefined) {
+      salaryMin = Number(salaryMin);
+      if (isNaN(salaryMin) || salaryMin < 0) {
+        return res.status(400).json({ error: "Invalid salaryMin" });
+      }
+    }
+
+    if (expMin !== undefined) {
+      expMin = Number(expMin);
+      if (isNaN(expMin) || expMin < 0) {
+        return res.status(400).json({ error: "Invalid expMin" });
+      }
+    }
+
+    if (expMax !== undefined) {
+      expMax = Number(expMax);
+      if (isNaN(expMax) || expMax < 0) {
+        return res.status(400).json({ error: "Invalid expMax" });
+      }
+    }
+
+    if (expMin !== undefined && expMax !== undefined && expMin > expMax) {
+      return res
+        .status(400)
+        .json({ error: "expMin cannot be greater than expMax" });
+    }
+
+    if (location !== undefined) {
+      if (typeof location !== "string") {
+        return res.status(400).json({ error: "Invalid location" });
+      }
+
+      location = location.trim();
+
+      if (location.length === 0 || location.length > 50) {
+        return res.status(400).json({ error: "Invalid location length" });
+      }
+
+      // Must contain at least one letter
+      if (!/[a-zA-Z]/.test(location)) {
+        return res.status(400).json({ error: "Location must contain letters" });
+      }
+
+      // Allow only safe characters
+      if (!/^[a-zA-Z0-9\s,-]+$/.test(location)) {
+        return res
+          .status(400)
+          .json({ error: "Location contains invalid characters" });
+      }
+    }
+    // -------- END VALIDATION --------
+
     const pageSize = 5;
     const filterCriteria = {};
 
-    if (salaryMin) {
-      filterCriteria.jobSalary = {};
-      if (salaryMin) filterCriteria.jobSalary.$gte = Number(salaryMin);
+    if (salaryMin !== undefined) {
+      filterCriteria.jobSalary = { $gte: salaryMin };
     }
 
-    if (expMin || expMax) {
+    if (expMin !== undefined || expMax !== undefined) {
       filterCriteria.jobExperience = {};
-      if (expMin) filterCriteria.jobExperience.$gte = Number(expMin);
-      if (expMax) filterCriteria.jobExperience.$lte = Number(expMax);
+      if (expMin !== undefined) filterCriteria.jobExperience.$gte = expMin;
+      if (expMax !== undefined) filterCriteria.jobExperience.$lte = expMax;
     }
 
-    if (location && location.trim()) {
+    if (location) {
       filterCriteria.jobLocation = {
-        $regex: location.trim(),
-        $options: "i"
+        $regex: location,
+        $options: "i",
       };
     }
 
@@ -51,9 +105,7 @@ const getJobs = async (req, res) => {
           as: "jobCompany",
         },
       },
-      {
-        $unwind: { path: "$jobCompany", preserveNullAndEmptyArrays: true },
-      },
+      { $unwind: { path: "$jobCompany", preserveNullAndEmptyArrays: true } },
       {
         $facet: {
           metaData: [{ $count: "totalcount" }],
@@ -80,26 +132,88 @@ const getInternships = async (req, res) => {
   try {
     const recruiterConn = await connectRecruiterDB();
     const InternshipFindConn = createInternshipModel(recruiterConn);
-    const CompanyModel = createCompanyModel(recruiterConn);
 
     let { stipendMin, durationMin, durationMax, page, location } = req.query;
-    page = parseInt(page) || 1;
+
+    // -------- VALIDATION --------
+    page = parseInt(page);
+    if (isNaN(page) || page < 1) page = 1;
+
+    if (stipendMin !== undefined) {
+      stipendMin = Number(stipendMin);
+      if (isNaN(stipendMin) || stipendMin < 0) {
+        return res.status(400).json({ error: "Invalid stipendMin" });
+      }
+    }
+
+    if (durationMin !== undefined) {
+      durationMin = Number(durationMin);
+      if (isNaN(durationMin) || durationMin < 0) {
+        return res.status(400).json({ error: "Invalid durationMin" });
+      }
+    }
+
+    if (durationMax !== undefined) {
+      durationMax = Number(durationMax);
+      if (isNaN(durationMax) || durationMax < 0) {
+        return res.status(400).json({ error: "Invalid durationMax" });
+      }
+    }
+
+    if (
+      durationMin !== undefined &&
+      durationMax !== undefined &&
+      durationMin > durationMax
+    ) {
+      return res
+        .status(400)
+        .json({ error: "durationMin cannot be greater than durationMax" });
+    }
+
+    if (location !== undefined) {
+      if (typeof location !== "string") {
+        return res.status(400).json({ error: "Invalid location" });
+      }
+
+      location = location.trim();
+
+      if (location.length === 0 || location.length > 50) {
+        return res.status(400).json({ error: "Invalid location length" });
+      }
+
+      // Must contain at least one letter
+      if (!/[a-zA-Z]/.test(location)) {
+        return res.status(400).json({ error: "Location must contain letters" });
+      }
+
+      // Allow only safe characters
+      if (!/^[a-zA-Z0-9\s,-]+$/.test(location)) {
+        return res
+          .status(400)
+          .json({ error: "Location contains invalid characters" });
+      }
+    }
+    // -------- END VALIDATION --------
+
     const pageSize = 5;
     const filterCriteria = {};
+
     if (stipendMin !== undefined) {
-      filterCriteria.intStipend = { $gte: Number(stipendMin) * 1000 };
+      filterCriteria.intStipend = { $gte: stipendMin * 1000 };
     }
 
-    if (durationMin || durationMax) {
+    if (durationMin !== undefined || durationMax !== undefined) {
       filterCriteria.intExperience = {};
-      if (durationMin) filterCriteria.intExperience.$gte = Number(durationMin);
-      if (durationMax) filterCriteria.intExperience.$lte = Number(durationMax);
+      if (durationMin !== undefined)
+        filterCriteria.intExperience.$gte = durationMin;
+      if (durationMax !== undefined)
+        filterCriteria.intExperience.$lte = durationMax;
     }
 
-    if (location && location.trim()) {
+    if (location) {
       filterCriteria.intLocation = {
-        $regex: location.trim(),
-        $options: "i"
+        $regex: location,
+        $options: "i",
       };
     }
 
@@ -151,27 +265,45 @@ const getCompanies = async (req, res) => {
 
 const filterJobs = async (req, res) => {
   try {
-    const {
-      salary1,
-      salary2,
-      salary3,
-      salary4,
-      exp1,
-      exp2,
-      exp3,
-      exp4,
-      exp5,
-      exp6,
+    let {
+      salary1, salary2, salary3, salary4,
+      exp1, exp2, exp3, exp4, exp5, exp6,
     } = req.body;
+
+    // -------- VALIDATION --------
+    const toBoolean = (val) => {
+      if (val === true || val === false) return val;
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return null;
+    };
+
+    const fields = {
+      salary1, salary2, salary3, salary4,
+      exp1, exp2, exp3, exp4, exp5, exp6,
+    };
+
+    for (let key in fields) {
+      const parsed = toBoolean(fields[key]);
+      if (parsed === null && fields[key] !== undefined) {
+        return res.status(400).json({ error: `Invalid value for ${key}` });
+      }
+      fields[key] = parsed ?? false; // default false
+    }
+
+    ({
+      salary1, salary2, salary3, salary4,
+      exp1, exp2, exp3, exp4, exp5, exp6,
+    } = fields);
+    // -------- END VALIDATION --------
 
     const recruiterConn = await connectRecruiterDB();
     const JobFindConn = createJobModel(recruiterConn);
-    // Register Company model before populate
     createCompanyModel(recruiterConn);
 
     const query = {};
 
-    // Salary Range Filters
+    // Salary Filters
     let salaryConditions = [];
     if (salary1) salaryConditions.push({ jobSalary: { $lt: 10 } });
     if (salary2) salaryConditions.push({ jobSalary: { $gte: 10, $lte: 20 } });
@@ -182,7 +314,7 @@ const filterJobs = async (req, res) => {
       query.$or = salaryConditions;
     }
 
-    // Experience Filter
+    // Experience Filters
     let expConditions = [];
     if (exp1) expConditions.push({ jobExperience: 0 });
     if (exp2) expConditions.push({ jobExperience: { $lt: 1 } });
@@ -212,15 +344,35 @@ const filterJobs = async (req, res) => {
 
 const filterInternships = async (req, res) => {
   try {
-    const { dur1, dur2, dur3, dur4 } = req.body;
+    let { dur1, dur2, dur3, dur4 } = req.body;
+
+    // -------- VALIDATION --------
+    const toBoolean = (val) => {
+      if (val === true || val === false) return val;
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return null;
+    };
+
+    const fields = { dur1, dur2, dur3, dur4 };
+
+    for (let key in fields) {
+      const parsed = toBoolean(fields[key]);
+      if (parsed === null && fields[key] !== undefined) {
+        return res.status(400).json({ error: `Invalid value for ${key}` });
+      }
+      fields[key] = parsed ?? false;
+    }
+
+    ({ dur1, dur2, dur3, dur4 } = fields);
+    // -------- END VALIDATION --------
 
     const recruiterConn = await connectRecruiterDB();
     const InternshipFindConn = createInternshipModel(recruiterConn);
-    const CompanyModel = createCompanyModel(recruiterConn);
+    createCompanyModel(recruiterConn);
 
     const query = {};
 
-    // Duration filter
     let durConditions = [];
     if (dur1) durConditions.push({ intDuration: { $lte: 1 } });
     if (dur2) durConditions.push({ intDuration: { $gt: 1, $lte: 3 } });
@@ -300,12 +452,16 @@ const getInternshipById = async (req, res) => {
 const uploadJobApplicationResume = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, error: "No resume file uploaded." });
+      return res
+        .status(400)
+        .json({ success: false, error: "No resume file uploaded." });
     }
     const userId = req.user?.id;
     const { jobId } = req.params;
     if (!userId) {
-      return res.status(401).json({ success: false, error: "Please login to upload resume." });
+      return res
+        .status(401)
+        .json({ success: false, error: "Please login to upload resume." });
     }
 
     const bucket = getBucket();
@@ -333,12 +489,16 @@ const uploadJobApplicationResume = async (req, res) => {
 const uploadInternshipApplicationResume = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, error: "No resume file uploaded." });
+      return res
+        .status(400)
+        .json({ success: false, error: "No resume file uploaded." });
     }
     const userId = req.user?.id;
     const { internshipId } = req.params;
     if (!userId) {
-      return res.status(401).json({ success: false, error: "Please login to upload resume." });
+      return res
+        .status(401)
+        .json({ success: false, error: "Please login to upload resume." });
     }
 
     const bucket = getBucket();
@@ -384,21 +544,28 @@ const applyForJob = async (req, res) => {
 
     if (applicationResumeId) {
       const bucket = getBucket();
-      const files = await bucket.find({ _id: new ObjectId(applicationResumeId) }).toArray();
+      const files = await bucket
+        .find({ _id: new ObjectId(applicationResumeId) })
+        .toArray();
       if (files.length === 0) {
-        return res.status(400).json({ error: "Invalid resume. Please upload the resume again." });
+        return res
+          .status(400)
+          .json({ error: "Invalid resume. Please upload the resume again." });
       }
       const file = files[0];
       const meta = file.metadata || {};
       if (meta.userId !== userId || meta.jobId !== jobId) {
-        return res.status(400).json({ error: "Resume does not belong to this application." });
+        return res
+          .status(400)
+          .json({ error: "Resume does not belong to this application." });
       }
       resumeIdToUse = new ObjectId(applicationResumeId);
     } else {
       if (!user.resumeId) {
-        return res
-          .status(400)
-          .json({ error: "Please upload a resume (default or job-specific) to apply for this job." });
+        return res.status(400).json({
+          error:
+            "Please upload a resume (default or job-specific) to apply for this job.",
+        });
       }
       resumeIdToUse = user.resumeId;
     }
@@ -493,21 +660,28 @@ const applyForInternship = async (req, res) => {
 
     if (applicationResumeId) {
       const bucket = getBucket();
-      const files = await bucket.find({ _id: new ObjectId(applicationResumeId) }).toArray();
+      const files = await bucket
+        .find({ _id: new ObjectId(applicationResumeId) })
+        .toArray();
       if (files.length === 0) {
-        return res.status(400).json({ error: "Invalid resume. Please upload the resume again." });
+        return res
+          .status(400)
+          .json({ error: "Invalid resume. Please upload the resume again." });
       }
       const file = files[0];
       const meta = file.metadata || {};
       if (meta.userId !== userId || meta.internshipId !== internshipId) {
-        return res.status(400).json({ error: "Resume does not belong to this application." });
+        return res
+          .status(400)
+          .json({ error: "Resume does not belong to this application." });
       }
       resumeIdToUse = new ObjectId(applicationResumeId);
     } else {
       if (!user.resumeId) {
-        return res
-          .status(400)
-          .json({ error: "Please upload a resume (default or internship-specific) to apply for this internship." });
+        return res.status(400).json({
+          error:
+            "Please upload a resume (default or internship-specific) to apply for this internship.",
+        });
       }
       resumeIdToUse = user.resumeId;
     }
@@ -594,10 +768,15 @@ const getLogo = async (req, res) => {
     }
 
     if (response.status !== 200) {
-      return res.status(response.status).json({ error: "Failed to fetch logo" });
+      return res
+        .status(response.status)
+        .json({ error: "Failed to fetch logo" });
     }
 
-    res.setHeader("Content-Type", response.headers["content-type"] || "image/png");
+    res.setHeader(
+      "Content-Type",
+      response.headers["content-type"] || "image/png",
+    );
     response.data.pipe(res);
   } catch (error) {
     if (error.response?.status === 404) {
@@ -625,8 +804,12 @@ const getDashboardStats = async (req, res) => {
     const allApplications = [...appliedJobs, ...appliedInternships];
 
     const selected = allApplications.filter((a) => a.isSelected).length;
-    const rejected = allApplications.filter((a) => !a.isSelected && a.isRejected).length;
-    const pending = allApplications.filter((a) => !a.isSelected && !a.isRejected).length;
+    const rejected = allApplications.filter(
+      (a) => !a.isSelected && a.isRejected,
+    ).length;
+    const pending = allApplications.filter(
+      (a) => !a.isSelected && !a.isRejected,
+    ).length;
 
     const responseRate =
       totalApplications > 0
