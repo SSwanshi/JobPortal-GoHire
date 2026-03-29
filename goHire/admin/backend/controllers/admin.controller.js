@@ -57,34 +57,45 @@ function createPremiumUserModel(connection) {
   return connection.model("Premium_User", premiumUserSchema);
 }
 
-// soap-api
-function getPremiumUsers(args, callback) {
-  connectApplicantDB()
-    .then(applicantConn => {
-      const PremiumUserModel = createPremiumUserModel(applicantConn);
+const fetchPremiumUsers = async () => {
+  const applicantConn = await connectApplicantDB();
+  const PremiumUserModel = createPremiumUserModel(applicantConn);
 
-      return PremiumUserModel.find({})
-        .select('email firstName lastName memberSince')
-        .sort({ email: 1 })
-        .lean();
-    })
-    .then(users => {
-      const formattedUsers = users.map(user => ({
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        memberSince: user.memberSince,
-        status: 'Premium'
-      }));
+  const users = await PremiumUserModel.find({})
+    .select('email firstName lastName memberSince')
+    .sort({ email: 1 })
+    .lean();
 
-      callback(null, { users: formattedUsers });
-    })
-    .catch(error => {
-      console.error("SOAP ERROR:", error);
+  return users.map((user) => ({
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    memberSince: user.memberSince,
+    status: 'Premium'
+  }));
+};
+
+// REST API
+const getPremiumUsers = async (req, res) => {
+  try {
+    const users = await fetchPremiumUsers();
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error fetching premium users:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// SOAP API
+function getPremiumUsersSoap(args, callback) {
+  fetchPremiumUsers()
+    .then((users) => callback(null, { users }))
+    .catch((error) => {
+      console.error('SOAP ERROR:', error);
       callback({
         Fault: {
-          faultcode: "500",
-          faultstring: "Internal Server Error"
+          faultcode: '500',
+          faultstring: 'Internal Server Error'
         }
       });
     });
@@ -200,6 +211,7 @@ const getStats = async (req, res) => {
 
 module.exports = {
   getPremiumUsers,
+  getPremiumUsersSoap,
   getProofDocument,
   getStats
 };

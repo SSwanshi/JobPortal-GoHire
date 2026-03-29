@@ -10,6 +10,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const connectRecruiterDB = require("./config/recruiterDB");
 const connectApplicantDB = require("./config/applicantDB");
+const setupGraphQL = require("./graphql/apolloServer");
 
 // Routes
 const authRoutes = require("./routes/auth.routes");
@@ -21,6 +22,7 @@ const internshipsRoutes = require("./routes/internships.routes");
 const adminRoutes = require("./routes/admin.routes");
 const adminController = require("./controllers/admin.controller");
 const premiumService = require('./services/soap.service');
+const backfillApplicantCompanyName = require('./utils/backfillApplicantCompanyName');
 const app = express();
 const PORT = process.env.PORT || 9000;
 
@@ -52,8 +54,6 @@ app.use(cors({
   exposedHeaders: ['Content-Type']
 }));
 
-
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -78,6 +78,7 @@ app.use(
 
 // Connect to databases
 connectDB();
+backfillApplicantCompanyName();
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -98,7 +99,7 @@ app.get("/api/stats", adminController.getStats);
 const errorHandler = require("./middleware/errorHandler");
 app.use(errorHandler);
 
-app.use(express.raw({ type: () => true, limit: '5mb' }));
+app.use('/wsdl', express.raw({ type: ['text/xml', 'application/soap+xml'], limit: '5mb' }));
 const wsdl = fs.readFileSync('./soap/wsdl/premiumUser.wsdl', 'utf8');
 soap.listen(app, '/wsdl', premiumService, wsdl).on('request', (xml) => {
   console.log("SOAP REQUEST:\n", xml);
@@ -109,6 +110,11 @@ const swaggerSetup = require('./swagger');
 
 // Setup Swagger API documentation
 swaggerSetup(app);
+
+// Setup GraphQL
+setupGraphQL(app).then(() => {
+  console.log('GraphQL server started at http://localhost:' + PORT + '/graphql');
+});
 
 app.listen(PORT, () => {
   console.log(`[Admin] Server running on http://localhost:${PORT}`);
