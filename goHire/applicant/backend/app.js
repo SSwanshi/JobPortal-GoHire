@@ -8,6 +8,8 @@ require('dotenv').config();
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const swaggerUi = require('swagger-ui-express');
+const { graphqlHTTP } = require('express-graphql');
+const graphqlSchema = require('./graphql/schema');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -79,6 +81,16 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/search', searchRoutes);
+
+// GraphQL (Option B: read-heavy queries)
+app.use(
+  '/api/graphql',
+  graphqlHTTP((req) => ({
+    schema: graphqlSchema,
+    graphiql: process.env.NODE_ENV !== 'production',
+    context: { req },
+  })),
+);
 
 app.get('/', (req, res) => {
   res.send('Applicant service is running');
