@@ -36,10 +36,12 @@
  *           schema:
  *             type: object
  *             properties:
- *               code:
+ *               email:
  *                 type: string
- *               userId:
+ *                 description: User email address
+ *               otp:
  *                 type: string
+ *                 description: 6-digit OTP sent to email
  *     responses:
  *       200:
  *         description: 2FA verified successfully

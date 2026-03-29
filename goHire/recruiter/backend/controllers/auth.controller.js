@@ -655,7 +655,6 @@ const verify2FA = async (req, res) => {
         email: user.email,
         phone: user.phone,
         gender: user.gender,
-        profileImage: user.profileImage,
         isPremium: user.isPremium
       }
     });

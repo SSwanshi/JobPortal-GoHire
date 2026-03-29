@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swaggerDef');
+const playgroundMiddleware = require('graphql-playground-middleware-express').default;
 
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
@@ -24,6 +25,7 @@ const logoRoutes = require('./routes/logo.routes');
 const proofRoutes = require('./routes/proof.routes');
 const upgradeRoutes = require('./routes/upgrade.routes');
 const applicantRoutes = require('./routes/applicant.routes');
+const graphqlRoutes = require('./routes/graphql.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -72,6 +74,9 @@ app.get('/api/health', (req, res) => {
 // Swagger Documentation API
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// GraphQL Playground
+app.get('/graphql-playground', playgroundMiddleware({ endpoint: '/api/graphql' }));
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/recruiter', recruiterRoutes);
@@ -81,6 +86,7 @@ app.use('/recruiter/logo', logoRoutes);
 app.use('/recruiter/proof', proofRoutes);
 app.use('/api/upgrade', upgradeRoutes);
 app.use('/api/applicant', applicantRoutes);
+app.use('/api', graphqlRoutes);
 
 // Cron jobs for cleanup
 cron.schedule('0 0 * * *', () => {
