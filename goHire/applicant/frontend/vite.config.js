@@ -12,4 +12,7 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
   },
+  optimizeDeps: {
+    include: ['react-chartjs-2', 'chart.js']
+  }
 })

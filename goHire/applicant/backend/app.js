@@ -23,6 +23,9 @@ const searchRoutes = require('./routes/search.routes');
 const app = express();
 const PORT = 3000; // Hardcoded port
 
+// Disable ETag generation to prevent 304 Not Modified responses
+app.set('etag', false);
+
 // CORS configuration (Hardcoded frontend URLs)
 const allowedOrigins = [
   'http://localhost:5173',
@@ -59,6 +62,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to database
 connectDB();
+
+// Disable caching for API endpoints (prevents 304 Not Modified responses)
+app.use('/api', (req, res, next) => {
+  // Prevent caching entirely
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '-1');
+  res.setHeader('ETag', '');
+  res.removeHeader('ETag');
+  
+  // Override the res.json to ensure fresh responses
+  const originalJson = res.json.bind(res);
+  res.json = function(data) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private, max-age=0');
+    return originalJson(data);
+  };
+  
+  next();
+});
 
 // Swagger (OpenAPI) docs (spec lives outside backend folder)
 // URL: /api/docs and /api/docs.json
