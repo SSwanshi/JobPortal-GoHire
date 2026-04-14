@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : 'https://gohire-admin.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_BASE ? import.meta.env.VITE_API_BASE : 'https://gohire-admin.onrender.com',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
