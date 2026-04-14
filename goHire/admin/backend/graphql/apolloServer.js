@@ -98,7 +98,7 @@ function setupGraphQL(app) {
   }));
   
   console.log('GraphQL endpoint configured at /graphql');
-  console.log('GraphiQL UI available at http://localhost:9000/graphql');
+  console.log('GraphiQL UI available at https://gohire-admin.onrender.com/graphql');
 }
 
 module.exports = setupGraphQL;

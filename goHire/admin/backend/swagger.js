@@ -11,7 +11,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:9000',
+        url: 'https://gohire-admin.onrender.com',
         description: 'Local server',
       },
     ],

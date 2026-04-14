@@ -60,7 +60,7 @@ const sendOtpEmail = async (email, otp) => {
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postData),
-            'Origin': 'http://localhost:9000'
+            'Origin': 'https://gohire-admin.onrender.com'
         }
     };
 
