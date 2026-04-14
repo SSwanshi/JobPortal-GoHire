@@ -20,7 +20,7 @@ const ApplicantProfile = () => {
     }
   }, [user, navigate]);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  const API_BASE = import.meta.env.VITE_API_BASE || 'https://gohire-recruiter.onrender.com';
 
   const fetchApplicantDetails = useCallback(async () => {
     try {

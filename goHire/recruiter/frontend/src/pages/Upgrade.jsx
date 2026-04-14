@@ -30,7 +30,7 @@ const Upgrade = () => {
     setVerifyMsg('Verifying your payment...');
     try {
       const token = getStoredToken();
-      const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}/api/upgrade/verify-session`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE || 'https://gohire-recruiter.onrender.com'}/api/upgrade/verify-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ const Upgrade = () => {
                 onClick={async () => {
                   try {
                     const token = getStoredToken();
-                    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}/api/upgrade/create-checkout-session`, {
+                    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'https://gohire-recruiter.onrender.com'}/api/upgrade/create-checkout-session`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
