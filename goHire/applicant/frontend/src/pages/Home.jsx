@@ -275,7 +275,7 @@ const Home = () => {
                   smart minds
                 </p>
                 <Link
-                  to="http://localhost:5175/login"
+                  to="https://gohire-recruiter.vercel.app/login"
                   className="bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300 inline-block mt-2"
                 >
                   Login as Recruiter
