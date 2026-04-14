@@ -42,5 +42,10 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "overrides": {
+    "graphql-playground-middleware-express": {
+      "express": "$express"
+    }
   }
 }
