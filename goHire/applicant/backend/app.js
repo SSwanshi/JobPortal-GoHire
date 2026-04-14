@@ -31,7 +31,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'https://gohire-applicant.vercel.app',
-  'https://gohire-applicant.onrender.com'
+  'https://gohire-applicant.onrender.com',
+  'https://gohire-recruiter.vercel.app',
+  'https://gohire-admin.vercel.app'
 ];
 
 app.use(cors({
