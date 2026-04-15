@@ -1,0 +1,31 @@
+name: Applicant Backend CI
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'goHire/applicant/backend/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'goHire/applicant/backend/**'
+
+defaults:
+  run:
+    working-directory: goHire/applicant/backend
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: goHire/applicant/backend/package-lock.json
+    - name: Install dependencies
+      run: npm install
+    - name: Run tests (if present)
+      run: npm test --if-present
