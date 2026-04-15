@@ -756,9 +756,11 @@ const getLogo = async (req, res) => {
       return res.status(400).json({ error: "Invalid logo ID" });
     }
 
+    const isLocal = process.env.NODE_ENV !== 'production' && !process.env.RECRUITER_API_URL;
+    const recruiterApiUrl = process.env.RECRUITER_API_URL || (isLocal ? 'http://localhost:5000' : 'https://gohire-recruiter.onrender.com');
     const response = await axios({
       method: "get",
-      url: `http://localhost:5000/recruiter/logo/${logoId}`,
+      url: `${recruiterApiUrl}/recruiter/logo/${logoId}`,
       responseType: "stream",
       validateStatus: (status) => status < 500, // Don't throw on 404
     });
