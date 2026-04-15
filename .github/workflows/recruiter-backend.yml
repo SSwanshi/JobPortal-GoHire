@@ -25,5 +25,8 @@ jobs:
         node-version: '22.14.0'
     - name: Install dependencies
       run: npm install
-    - name: Run tests (if present)
-      run: npm test --if-present
+    - name: Run tests
+      env:
+        MONGO_URI_TEST: ${{ secrets.MONGO_URI_TEST }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      run: npm test

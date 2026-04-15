@@ -58,7 +58,7 @@ app.use(cors({
   exposedHeaders: ['Content-Type']
 }));
 
-// try to trigger ci g
+// checking CI pipeline
 
 // Middleware
 app.use(express.json());
@@ -131,7 +131,11 @@ swaggerSetup(app);
 // Setup GraphQL
 setupGraphQL(app);
 
-app.listen(PORT, () => {
-  console.log(`[Admin] Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`[Admin] Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
 

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests yet\" && exit 0",
+    "test": "jest",
     "dev": "nodemon app.js"
   },
   "keywords": [],
@@ -41,11 +41,16 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.2.2"
   },
   "overrides": {
     "graphql-playground-middleware-express": {
       "express": "$express"
     }
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
