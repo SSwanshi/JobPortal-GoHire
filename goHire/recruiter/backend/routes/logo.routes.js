@@ -20,7 +20,7 @@ router.get('/:id', async (req, res) => {
     downloadStream.pipe(res);
   } catch (error) {
     console.error("Error fetching image:", error);
-    res.status(500).json({ error: "Failed to retrieve image" });
+    res.status(500).json({ error: "Failed to retrieve image", details: error.message, stack: error.stack });
   }
 });
 
