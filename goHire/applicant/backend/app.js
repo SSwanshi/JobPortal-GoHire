@@ -51,6 +51,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// CI pipeline test
+
 // Middleware
 // Log to console
 app.use(morgan('dev'));

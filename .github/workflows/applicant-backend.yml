@@ -29,4 +29,10 @@ jobs:
       env:
         MONGO_URI_TEST: ${{ secrets.MONGO_URI_TEST }}
         SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        STRIPE_SECRET_KEY: dummy_test_key
+        STRIPE_WEBHOOK_SECRET: dummy_test_key
+        EMAILJS_SERVICE_ID: dummy_test_key
+        EMAILJS_TEMPLATE_ID: dummy_test_key
+        EMAILJS_PUBLIC_KEY: dummy_test_key
+        EMAILJS_PRIVATE_KEY: dummy_test_key
       run: npm test
