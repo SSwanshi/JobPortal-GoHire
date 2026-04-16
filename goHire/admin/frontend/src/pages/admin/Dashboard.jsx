@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { adminApi } from '../../services/adminApi';
@@ -82,12 +82,7 @@ const Dashboard = () => {
     return last6Months;
   };
 
-  useEffect(() => {
-    fetchStats();
-    dispatch(fetchPendingVerificationsCount());
-  }, [dispatch]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const [applicants, recruiters, companies, jobs, internships, premiumUsers] = await Promise.all([
         adminApi.getApplicants().catch(() => []),
@@ -98,13 +93,15 @@ const Dashboard = () => {
         adminApi.getPremiumUsers().catch(() => []),
       ]);
 
+      const premiumUsersCount = premiumUsers.length || 0;
+
       setStats({
         applicants: applicants.length || 0,
         recruiters: recruiters.length || 0,
         companies: companies.length || 0,
         jobs: jobs.flatMap(c => c.jobs || []).length || 0,
         internships: internships.flatMap(c => c.internships || []).length || 0,
-        premiumUsers: premiumUsers.length || 0,
+        premiumUsers: premiumUsersCount,
       });
 
       // Process time-based registration data
@@ -141,15 +138,20 @@ const Dashboard = () => {
 
       // Set revenue data based on premium users
       setRevenueData({
-        premiumApplicants: Math.floor(stats.premiumUsers * 0.6) || 12, // 60% applicants
-        premiumRecruiters: Math.floor(stats.premiumUsers * 0.4) || 8   // 40% recruiters
+        premiumApplicants: Math.floor(premiumUsersCount * 0.6) || 12, // 60% applicants
+        premiumRecruiters: Math.floor(premiumUsersCount * 0.4) || 8   // 40% recruiters
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchStats();
+    dispatch(fetchPendingVerificationsCount());
+  }, [dispatch, fetchStats]);
 
   if (loading) {
     return (

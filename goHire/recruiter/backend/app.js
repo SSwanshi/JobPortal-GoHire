@@ -51,9 +51,11 @@ app.use(cors({
 // Log to console
 app.use(morgan('dev'));
 
-// Log to file
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
-app.use(morgan('combined', { stream: accessLogStream }));
+if (process.env.NODE_ENV !== 'test') {
+  // Log to file only for non-test runs to avoid open file handles during Jest.
+  const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+  app.use(morgan('combined', { stream: accessLogStream }));
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -102,16 +104,18 @@ app.use('/api/upgrade', upgradeRoutes);
 app.use('/api/applicant', applicantRoutes);
 app.use('/api', graphqlRoutes);
 
-// Cron jobs for cleanup
-cron.schedule('0 0 * * *', () => {
-  console.log('Running expired jobs cleanup...');
-  deleteExpiredJobs();
-});
+if (process.env.NODE_ENV !== 'test') {
+  // Cron jobs clean up expired content automatically in production and development.
+  cron.schedule('0 0 * * *', () => {
+    console.log('Running expired jobs cleanup...');
+    deleteExpiredJobs();
+  });
 
-cron.schedule('0 0 * * *', () => {
-  console.log('Running expired internships cleanup...');
-  deleteExpiredInternship();
-});
+  cron.schedule('0 0 * * *', () => {
+    console.log('Running expired internships cleanup...');
+    deleteExpiredInternship();
+  });
+}
 
 // 404 handler
 app.use(notFound);

@@ -128,6 +128,49 @@ cd "React GoHire/goHire/recruiter/frontend" && npm run dev
 - **Recruiter API**: `http://localhost:5000/api/health`
 - **Recruiter UI**: `http://localhost:5175`
 
+## API documentation
+- **Admin Swagger**: `http://localhost:9000/api-docs`
+- **Admin GraphQL**: `http://localhost:9000/graphql`
+- **Applicant Swagger**: `http://localhost:3000/api/docs`
+- **Applicant OpenAPI JSON**: `http://localhost:3000/api/docs.json`
+- **Applicant GraphQL**: `http://localhost:3000/api/graphql`
+- **Recruiter Swagger**: `http://localhost:5000/api-docs`
+- **Recruiter GraphQL Playground**: `http://localhost:5000/graphql-playground`
+
+## Testing the whole platform
+From the repository root, run:
+
+```bash
+npm run test:all
+```
+
+or run each service individually:
+
+```bash
+npm run test:admin
+npm run test:recruiter
+npm run test:applicant
+```
+
+## Safe DB cleanup
+The cleanup scripts are intentionally targeted and do not drop entire databases.
+
+From the repository root, run:
+
+```bash
+npm run cleanup:all
+```
+
+Or per service:
+
+```bash
+npm run cleanup:admin
+npm run cleanup:recruiter
+npm run cleanup:applicant
+```
+
+These cleanup scripts remove expired jobs/internships and expired OTP records only.
+
 ## Common issues
 
 - **Vite “Port is already in use”**: these frontends use `strictPort: true`:

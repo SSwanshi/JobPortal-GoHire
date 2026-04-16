@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --forceExit",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "cleanup": "node scripts/cleanup-expired.js",
+    "clean-db": "npm run cleanup"
   },
   "keywords": [],
   "author": "",

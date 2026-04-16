@@ -67,23 +67,26 @@ app.use(express.urlencoded({ extended: true }));
 // Session configuration
 app.set("trust proxy", 1);
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "admin-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    },
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI_ADMIN || "mongodb://localhost:27017/admin_db",
-      ttl: 14 * 24 * 60 * 60 // 14 days
-    })
-  })
-);
+const sessionOptions = {
+  secret: process.env.SESSION_SECRET || "admin-secret-key",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+};
+
+if (process.env.NODE_ENV !== 'test') {
+  sessionOptions.store = MongoStore.create({
+    mongoUrl: process.env.MONGO_URI_ADMIN || "mongodb://localhost:27017/admin_db",
+    ttl: 14 * 24 * 60 * 60 // 14 days
+  });
+}
+
+app.use(session(sessionOptions));
 
 // Connect to databases
 if (process.env.NODE_ENV !== 'test') {
@@ -118,11 +121,13 @@ app.get("/api/stats", adminController.getStats);
 const errorHandler = require("./middleware/errorHandler");
 app.use(errorHandler);
 
-app.use('/wsdl', express.raw({ type: ['text/xml', 'application/soap+xml'], limit: '5mb' }));
-const wsdl = fs.readFileSync('./soap/wsdl/premiumUser.wsdl', 'utf8');
-soap.listen(app, '/wsdl', premiumService, wsdl).on('request', (xml) => {
-  console.log("SOAP REQUEST:\n", xml);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/wsdl', express.raw({ type: ['text/xml', 'application/soap+xml'], limit: '5mb' }));
+  const wsdl = fs.readFileSync('./soap/wsdl/premiumUser.wsdl', 'utf8');
+  soap.listen(app, '/wsdl', premiumService, wsdl).on('request', (xml) => {
+    console.log("SOAP REQUEST:\n", xml);
+  });
+}
 
 // Import Swagger configuration
 const swaggerSetup = require('./swagger');

@@ -6,8 +6,10 @@ async function deleteExpiredInternship() {
       intExpiry: { $lt: new Date() }
     });
     console.log(`Deleted ${result.deletedCount} expired internships`);
+    return result;
   } catch (error) {
     console.error('Error deleting expired internships:', error);
+    return { deletedCount: 0 };
   }
 }
 

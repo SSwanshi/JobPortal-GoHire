@@ -6,8 +6,10 @@ async function deleteExpiredJobs() {
       jobExpiry: { $lt: new Date() }
     });
     console.log(`Deleted ${result.deletedCount} expired jobs`);
+    return result;
   } catch (error) {
     console.error('Error deleting expired jobs:', error);
+    return { deletedCount: 0 };
   }
 }
 
