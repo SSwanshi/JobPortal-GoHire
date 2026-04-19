@@ -1,34 +1,16 @@
 services:
-  mongo:
-    image: mongo:7.0
-    container_name: gohire-mongo
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   admin-backend:
     build:
       context: ./goHire/admin/backend
     container_name: gohire-admin-backend
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
+    env_file:
+      - ./goHire/admin/backend/.env
     environment:
       NODE_ENV: production
       PORT: 9000
       SESSION_SECRET: admin-secret-key-change-me
       FRONTEND_URL: http://localhost:5173
-      MONGO_URI_ADMIN: mongodb://mongo:27017/admin_db
-      MONGO_URI_RECRUITERS: mongodb://mongo:27017/recruiter_db
-      MONGO_URI_APPLICANT: mongodb://mongo:27017/applicant_db
     ports:
       - "9000:9000"
 
@@ -37,14 +19,12 @@ services:
       context: ./goHire/applicant/backend
     container_name: gohire-applicant-backend
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
+    env_file:
+      - ./goHire/applicant/backend/.env
     environment:
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: http://localhost:5174
-      MONGO_URI: mongodb://mongo:27017/applicant_db
       RECRUITER_API_URL: http://recruiter-backend:5000
     ports:
       - "3000:3000"
@@ -54,15 +34,12 @@ services:
       context: ./goHire/recruiter/backend
     container_name: gohire-recruiter-backend
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
+    env_file:
+      - ./goHire/recruiter/backend/.env
     environment:
       NODE_ENV: production
       PORT: 5000
       FRONTEND_URL: http://localhost:5175
-      MONGO_URI: mongodb://mongo:27017/recruiter_db
-      MONGO_URI_APPLICANT: mongodb://mongo:27017/applicant_db
     ports:
       - "5000:5000"
 
@@ -101,6 +78,3 @@ services:
       VITE_API_BASE: http://localhost:5000
     ports:
       - "5175:5175"
-
-volumes:
-  mongo_data:
