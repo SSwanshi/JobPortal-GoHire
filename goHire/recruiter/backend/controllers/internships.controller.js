@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Internship = require('../models/Internship');
 const Company = require('../models/Companies');
-
+const invalidateInternshipCache = require('../utils/cacheInvalidation').invalidateInternshipCache;
+const redis = require('../config/redis');
 const getInternships = async (req, res) => {
   try {
     const internships = await Internship.find({ createdBy: req.userId }).populate("intCompany");
@@ -69,6 +70,7 @@ const addInternship = async (req, res) => {
     });
 
     await newInternship.save();
+    invalidateInternshipCache(redis);
     res.json({ success: true, message: "Internship added successfully!", internship: newInternship });
   } catch (error) {
     console.error("Error adding internship:", error);
@@ -84,7 +86,7 @@ const getEditInternship = async (req, res) => {
     if (!internship) {
       return res.status(404).json({ success: false, message: 'Internship not found' });
     }
-
+    invalidateInternshipCache(redis);
     res.json({ success: true, internship, companies });
   } catch (err) {
     console.error("Error loading edit internship page:", err);
@@ -125,7 +127,7 @@ const updateInternship = async (req, res) => {
     if (!internship) {
       return res.status(404).json({ success: false, message: 'Internship not found' });
     }
-
+    invalidateInternshipCache(redis)
     res.json({ success: true, message: "Internship updated successfully!", internship });
   } catch (err) {
     console.error("Error updating internship:", err);
@@ -139,7 +141,7 @@ const deleteInternship = async (req, res) => {
     if (!internship) {
       return res.status(404).json({ success: false, message: 'Internship not found' });
     }
-
+    invalidateInternshipCache(redis)
     res.json({ success: true, message: 'Internship deleted successfully' });
   } catch (error) {
     console.error('Error deleting internship:', error);

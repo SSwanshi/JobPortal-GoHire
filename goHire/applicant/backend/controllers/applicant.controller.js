@@ -10,6 +10,8 @@ const Applied_for_Jobs = require("../models/Applied_for_Jobs");
 const Applied_for_Internships = require("../models/Applied_for_Internships");
 const Fuse = require("fuse.js");
 const { getBucket } = require("../config/db");
+const redis = require("../config/redis");
+const { cached } = require("sqlite3");
 
 const getJobs = async (req, res) => {
   try {
@@ -94,6 +96,22 @@ const getJobs = async (req, res) => {
       if (expMax !== undefined) filterCriteria.jobExperience.$lte = expMax;
     }
 
+    const cacheKey = `jobs:location=${location || "any"}:salaryMin=${salaryMin || 0}:expMin=${expMin || 0}:expMax=${expMax || "any"}:page=${page}`;
+
+    let cachedData = null;
+    try {
+      cachedData = await redis.get(cacheKey);
+    } catch (error) {
+      console.error("Redis GET error:", err);
+    }
+
+    if(cachedData) {
+      console.log("Serving from Redis cache");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+
+    console.log("Cache miss - querying MongoDB");
+
     const jobs = await JobFindConn.aggregate([
       { $match: filterCriteria },
       { $sort: { createdAt: -1 } },
@@ -121,11 +139,20 @@ const getJobs = async (req, res) => {
     const totalCount = jobs[0]?.metaData[0]?.totalcount || 0;
     const totalPages = Math.ceil(totalCount / pageSize);
 
-    res.status(200).json({
+    const responseData = {
       message: "success",
       meta: { totalCount, totalPages, page, pageSize },
       jobs: jobs[0]?.data || [],
-    });
+    };
+
+    try {
+      await redis.set(cacheKey, JSON.stringify(responseData), "EX", 120);
+    } catch (err) {
+      console.error("Redis SET error:", err);
+    }
+
+    res.status(200).json(responseData);
+
   } catch (err) {
     console.error("Error fetching jobs:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -220,7 +247,22 @@ const getInternships = async (req, res) => {
       if (durationMax !== undefined)
         filterCriteria.intExperience.$lte = durationMax;
     }
+    
+    const cacheKey = `internships:location=${location || "any"}:stipendMin=${stipendMin || 0}:durationMin=${durationMin || 0}:durationMax=${durationMax || "any"}:page=${page}`;
 
+    let cachedData = null;
+    try {
+      cachedData = await redis.get(cacheKey);
+    } catch (error) {
+      console.error("Redis GET error:", err);
+    }
+
+    if(cachedData) {
+      console.log("Serving from Redis cache");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+
+    console.log("Cache miss - querying MongoDB");
 
     const internships = await InternshipFindConn.aggregate([
       { $match: filterCriteria },
@@ -249,11 +291,20 @@ const getInternships = async (req, res) => {
     const totalCount = internships[0]?.metaData[0]?.totalcount || 0;
     const totalPages = Math.ceil(totalCount / pageSize);
 
-    res.status(200).json({
+    const responseData = {
       message: "success",
       meta: { totalCount, totalPages, page, pageSize },
       internships: internships[0]?.data || [],
-    });
+    };
+
+    try {
+      await redis.set(cacheKey, JSON.stringify(responseData), "EX", 120);
+    } catch (err) {
+      console.error("Redis SET error:", err);
+    }
+
+    res.status(200).json(responseData);
+
   } catch (err) {
     console.error("Error fetching internships:", err);
     res.status(500).json({ error: "Internal Server Error" });

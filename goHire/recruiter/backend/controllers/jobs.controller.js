@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Job = require('../models/Jobs');
 const Company = require('../models/Companies');
-
+const redis = require('../config/redis');
+const { invalidateJobCache } = require('../utils/cacheInvalidation');
 const getJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ createdBy: req.userId }).populate("jobCompany");
@@ -69,6 +70,8 @@ const addJob = async (req, res) => {
     });
 
     await newJob.save();
+    invalidateJobCache(redis);
+
     res.json({ success: true, message: "Job added successfully!", job: newJob });
   } catch (error) {
     console.error("Error adding job:", error);
@@ -84,7 +87,7 @@ const getEditJob = async (req, res) => {
     if (!job) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
-
+    invalidateJobCache(redis);
     res.json({ success: true, job, companies });
   } catch (err) {
     console.error("Error loading edit job page:", err);
@@ -125,7 +128,7 @@ const updateJob = async (req, res) => {
     if (!job) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
-
+    invalidateJobCache(redis);
     res.json({ success: true, message: "Job updated successfully!", job });
   } catch (err) {
     console.error("Error updating job:", err);
@@ -139,7 +142,7 @@ const deleteJob = async (req, res) => {
     if (!job) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
-
+    invalidateJobCache(redis);
     res.json({ success: true, message: 'Job deleted successfully' });
   } catch (error) {
     console.error('Error deleting job:', error);
