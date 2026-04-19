@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-04-19T16:51:49.545Z",
+  "runStartedAt": "2026-04-19T16:51:25.600Z",
+  "runEndedAt": "2026-04-19T16:51:49.545Z",
+  "overallStatus": "passed",
+  "results": [
+    {
+      "project": "admin-backend",
+      "cwd": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\goHire\\admin\\backend",
+      "startedAt": "2026-04-19T16:51:25.611Z",
+      "endedAt": "2026-04-19T16:51:28.595Z",
+      "exitCode": 0,
+      "signal": null,
+      "runner": "npm (shell)",
+      "commandLogPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\admin-backend\\command.log",
+      "reportPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\admin-backend\\results.json",
+      "coveragePath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\admin-backend\\coverage",
+      "error": null
+    },
+    {
+      "project": "applicant-backend",
+      "cwd": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\goHire\\applicant\\backend",
+      "startedAt": "2026-04-19T16:51:28.620Z",
+      "endedAt": "2026-04-19T16:51:43.437Z",
+      "exitCode": 0,
+      "signal": null,
+      "runner": "npm (shell)",
+      "commandLogPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\applicant-backend\\command.log",
+      "reportPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\applicant-backend\\results.json",
+      "coveragePath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\applicant-backend\\coverage",
+      "error": null
+    },
+    {
+      "project": "recruiter-backend",
+      "cwd": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\goHire\\recruiter\\backend",
+      "startedAt": "2026-04-19T16:51:43.450Z",
+      "endedAt": "2026-04-19T16:51:49.542Z",
+      "exitCode": 0,
+      "signal": null,
+      "runner": "npm (shell)",
+      "commandLogPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\recruiter-backend\\command.log",
+      "reportPath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\recruiter-backend\\results.json",
+      "coveragePath": "C:\\B TECH IIITS\\Sem 6\\1. WBD\\React GoHire (2)\\React GoHire\\test-reports\\recruiter-backend\\coverage",
+      "error": null
+    }
+  ]
+}
