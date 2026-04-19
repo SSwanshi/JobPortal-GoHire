@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "test:reports": "node goHire/scripts/generate-test-reports.js",
+    "test:reports:md": "node goHire/scripts/generate-test-reports.js --format=markdown",
+    "test:reports:json": "node goHire/scripts/generate-test-reports.js --format=json",
+    "test:report": "npm run test:reports"
+  },
   "dependencies": {
     "chart.js": "^4.5.1",
     "react-chartjs-2": "^5.3.1"
