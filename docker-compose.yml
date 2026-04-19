@@ -18,7 +18,7 @@ services:
       EMAILJS_TEMPLATE_ID: ""
       EMAILJS_PUBLIC_KEY: ""
       EMAILJS_PRIVATE_KEY: ""
-      FRONTEND_URL: https://gohire-admin.vercel.app
+      FRONTEND_URL: http://localhost:5173
     ports:
       - "9000:9000"
 
@@ -39,8 +39,8 @@ services:
       EMAILJS_TEMPLATE_ID: ""
       EMAILJS_PUBLIC_KEY: ""
       EMAILJS_PRIVATE_KEY: ""
-      FRONTEND_URL: https://gohire-applicant.vercel.app
-      RECRUITER_API_URL: https://gohire-recruiter.onrender.com
+      FRONTEND_URL: http://localhost:5174
+      RECRUITER_API_URL: http://gohire-recruiter-backend:5000
     ports:
       - "3000:3000"
 
@@ -62,7 +62,7 @@ services:
       EMAILJS_TEMPLATE_ID: ""
       EMAILJS_PUBLIC_KEY: ""
       EMAILJS_PRIVATE_KEY: ""
-      FRONTEND_URL: https://gohire-recruiter.vercel.app
+      FRONTEND_URL: http://localhost:5175
     ports:
       - "5000:5000"
 
@@ -74,7 +74,7 @@ services:
     depends_on:
       - admin-backend
     environment:
-      VITE_API_BASE: https://gohire-admin.onrender.com
+      VITE_API_BASE: http://localhost:9000
     ports:
       - "5173:5173"
 
@@ -86,7 +86,7 @@ services:
     depends_on:
       - applicant-backend
     environment:
-      VITE_API_BASE: https://gohire-applicant.onrender.com
+      VITE_API_BASE: http://localhost:3000
     ports:
       - "5174:5174"
 
@@ -98,6 +98,6 @@ services:
     depends_on:
       - recruiter-backend
     environment:
-      VITE_API_BASE: https://gohire-recruiter.onrender.com
+      VITE_API_BASE: http://localhost:5000
     ports:
       - "5175:5175"
