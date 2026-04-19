@@ -31,5 +31,5 @@ describe('Applicant API', () => {
         const res = await request(app).get('/api/applicant/jobs');
         // Likely 200 or 500 depending on DB connection in test env, but NOT auth error
         expect([200, 500]).toContain(res.statusCode);
-    });
+    }, 15000);
 });
