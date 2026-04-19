@@ -75,8 +75,6 @@ services:
       - admin-backend
     environment:
       VITE_API_BASE: http://localhost:9000
-    command: >
-      sh -c "npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "5173:5173"
 
@@ -89,8 +87,6 @@ services:
       - applicant-backend
     environment:
       VITE_API_BASE: http://localhost:3000
-    command: >
-      sh -c "npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu && npm run dev -- --host 0.0.0.0 --port 5174"
     ports:
       - "5174:5174"
 
@@ -103,8 +99,6 @@ services:
       - recruiter-backend
     environment:
       VITE_API_BASE: http://localhost:5000
-    command: >
-      sh -c "npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu && npm run dev -- --host 0.0.0.0 --port 5175"
     ports:
       - "5175:5175"
 
