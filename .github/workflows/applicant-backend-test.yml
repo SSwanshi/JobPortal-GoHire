@@ -44,3 +44,4 @@ jobs:
         SESSION_SECRET: test_session_secret
         MONGO_URI: mongodb://127.0.0.1:27017/applicant_db_test
         MONGO_URI_RECRUITER: mongodb://127.0.0.1:27017/recruiter_db_test
+        STRIPE_SECRET_KEY: sk_test_dummy

@@ -4,7 +4,7 @@ const User = require('../models/user');
 const PremiumUser = require('../models/premium_user');
 
 // Initialize Stripe
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key');
 
 // Payment Controller Functions
 const createPaymentIntent = async (req, res) => {
