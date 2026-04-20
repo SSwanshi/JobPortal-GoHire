@@ -1,9 +1,9 @@
 # Test Report Summary
 
-- Generated At: 2026-04-20T08:18:49.573Z
-- Run Started At: 2026-04-20T08:17:51.920Z
-- Run Ended At: 2026-04-20T08:18:49.573Z
-- Duration: 57653 ms
+- Generated At: 2026-04-20T08:45:20.813Z
+- Run Started At: 2026-04-20T08:44:37.670Z
+- Run Ended At: 2026-04-20T08:45:20.813Z
+- Duration: 43143 ms
 - Overall Status: **FAILED**
 
 | Project | Status | Exit Code | Runner | Report | Coverage |
