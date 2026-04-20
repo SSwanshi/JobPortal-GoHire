@@ -75,7 +75,7 @@ const getJobs = async (req, res) => {
       }
     }
     // -------- END VALIDATION --------
-
+    // redis here
     const pageSize = 5;
     const filterCriteria = {};
 
