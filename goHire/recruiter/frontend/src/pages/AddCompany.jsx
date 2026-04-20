@@ -30,7 +30,6 @@ const AddCompany = () => {
       formData.append('website', values.website.trim());
       formData.append('location', values.location.trim());
 
-      // Append files if they exist
       if (values.logo) {
         formData.append('logo', values.logo);
       }
