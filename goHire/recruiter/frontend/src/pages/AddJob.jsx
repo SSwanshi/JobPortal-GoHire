@@ -42,7 +42,7 @@ const AddJob = () => {
     setSubmitting(true);
 
     try {
-      // Prepare job data
+      
       const jobData = {
         jobTitle: values.jobTitle.trim(),
         jobDescription: values.jobDescription.trim(),
