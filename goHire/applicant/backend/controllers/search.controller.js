@@ -94,7 +94,7 @@ const search = async (req, res) => {
 
     let jobs;
     let internships;
-    let engine = 'fuse';
+    let engine = 'solr';
 
     if (isSolrEnabled() && enteredValue.trim()) {
       try {
@@ -107,7 +107,7 @@ const search = async (req, res) => {
         const out = await searchWithFuse(enteredValue);
         jobs = out.jobs;
         internships = out.internships;
-        engine = 'fuse';
+        engine = 'solr';
       }
     } else {
       const out = await searchWithFuse(enteredValue);
